@@ -226,10 +226,16 @@ class MobilettoOrmTypeDef {
                     }
                 }
                 if (typeof(errors[fieldName]) === 'undefined') {
-                    if (field.normalize) {
-                        validated[fieldName] = field.normalize(thing[fieldName])
+                    let fieldValue = null
+                    if (isCreate && typeof(field.default) !== 'undefined' && (typeof(thing[fieldName]) !== 'string' || thing[fieldName].length === 0)) {
+                        fieldValue = field.default
                     } else {
-                        validated[fieldName] = thing[fieldName]
+                        fieldValue = thing[fieldName]
+                    }
+                    if (field.normalize) {
+                        validated[fieldName] = field.normalize(fieldValue)
+                    } else {
+                        validated[fieldName] = fieldValue
                     }
                 }
             }

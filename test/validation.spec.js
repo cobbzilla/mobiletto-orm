@@ -2,6 +2,8 @@ const { expect } = require('chai')
 const { MobilettoOrmValidationError } = require('../index')
 const { initStorage, test, rand } = require('./test-common')
 
+const SOME_DEFAULT_VALUE = rand(10)
+
 const typeDefConfig = {
     typeName: `TestType_${rand(10)}`,
     fields: {
@@ -18,6 +20,9 @@ const typeDefConfig = {
         comments: {},
         alphaOnly: {
             regex: /^[A-Z]+$/gi
+        },
+        defaultableField: {
+            default: SOME_DEFAULT_VALUE
         }
     }
 }
@@ -136,7 +141,7 @@ describe('validation test', async () => {
             expect(e.errors['alphaOnly'][0]).equals('regex', 'expected alphaOnly.regex error')
         }
     })
-    it("successfully creates a valid object", async () => {
+    it("successfully creates a valid object, verifying default field is properly set", async () => {
         const comments = rand(1000)
         const alphaString = 'AbCdEfGh'
         test.newThing = await test.repo.create({
@@ -149,6 +154,7 @@ describe('validation test', async () => {
         expect(test.newThing.int).eq(100)
         expect(test.newThing.comments).eq(comments)
         expect(test.newThing.alphaOnly).eq(alphaString)
+        expect(test.newThing.defaultableField).eq(SOME_DEFAULT_VALUE)
     })
     it("successfully updates the object but a non-updatable field will not be updated", async () => {
         const newValue = rand(50)

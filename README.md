@@ -186,6 +186,9 @@ Other field configuration properties are outlined below:
         # this field can only be set upon creation
         # updates to this field will be silently ignored
         updatable: false
+
+        # when creating a new object, use this default value if myExampleField is empty
+        default: 'Some-Default-Value'
     }
 
     myExampleStringField: {
