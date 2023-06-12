@@ -5,7 +5,7 @@ const fs = require('fs')
 require('dotenv').config()
 
 const { mobiletto, closeRedis } = require('mobiletto-lite')
-const { versionStamp, repositoryFactory } = require("../index");
+const { versionStamp, repositoryFactory, MobilettoOrmError } = require("../index");
 const { logger } = require("../util/logger");
 const randomstring = require("randomstring");
 
@@ -88,11 +88,76 @@ const splitStorage = (done, typeDefConfig) => {
         .finally(() => done())
 }
 
+
+class MockStorage {
+    constructor(storage) {
+        this.storage = storage
+        this.failing = null
+        this.name = storage.name
+    }
+    fail (message) {
+        throw new MobilettoOrmError(message)
+    }
+    async list (path, opts) {
+        if (this.failing) this.fail('list')
+        return this.storage.list(path, opts)
+    }
+    async safeList (path) {
+        if (this.failing) return []
+        return this.storage.safeList(path)
+    }
+    async readFile (path) {
+        if (this.failing) this.fail('readFile')
+        return this.storage.readFile(path)
+    }
+    async safeReadFile (path) {
+        if (this.failing) return null
+        return this.storage.safeReadFile(path)
+    }
+    metadata (path) {
+        if (this.failing) this.fail('metadata')
+        return this.storage.safeMetadata(path)
+    }
+    async safeMetadata (path) {
+        if (this.failing) return null
+        return this.storage.safeMetadata(path)
+    }
+    async writeFile (path, data) {
+        if (this.failing) this.fail('writeFile')
+        return this.storage.writeFile(path, data)
+    }
+    async write (path, data) {
+        if (this.failing) this.fail('write')
+        return this.storage.write(path, data)
+    }
+    async remove (path, opts) {
+        if (this.failing) this.fail('remove')
+        return this.storage.remove(path, opts)
+    }
+}
+
+const fallibleStorage = (done, typeDefConfig) => {
+    initTest(test)
+    getStorages()
+        .then(stores => {
+            test.storages = stores.map(s => new MockStorage(s))
+            test.factory = repositoryFactory(test.storages)
+            test.repo = test.factory.repository(typeDefConfig)
+            test.setFailing = i => test.storages[i].failing = true
+            test.unsetFailing = i => test.storages[i].failing = null
+        })
+        .catch(e => {
+            console.error(`initStorage error: ${e}`)
+            throw e
+        })
+        .finally(() => done())
+}
+
 after ( (done) => {
     logger.info('all tests finished, tearing down redis...')
     closeRedis().finally(done)
 })
 
 module.exports = {
-    initStorage, splitStorage, test, rand
+    initStorage, splitStorage, fallibleStorage, test, rand
 }

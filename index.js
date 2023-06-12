@@ -4,7 +4,8 @@ const randomstring = require('randomstring')
 const { logger } = require('./util/logger')
 const { M_DIR } = require('mobiletto-lite')
 
-const MAX_VERSIONS = 5
+const DEFAULT_MAX_VERSIONS = 5
+const DEFAULT_MIN_WRITES = 0
 
 function MobilettoOrmError (message, err) {
     this.message = `${message}: ${err ? err : ''}`
@@ -64,11 +65,29 @@ const normalizeId = fsSafeName
 
 const verifyWrite = async (repository, storages, typeDef, id, obj) => {
     const writePromises = []
+    const writeSuccesses = []
+    const expectedSuccessCount = typeDef.minWrites < 0 ? storages.length : typeDef.minWrites
     const objPath = typeDef.specificPath(obj)
     const objJson = JSON.stringify(obj)
     for (const storage of storages) {
         // write object
-        writePromises.push(storage.writeFile(objPath, objJson))
+        writePromises.push(new Promise(async (resolve, reject) => {
+            try {
+                const bytesWritten = await storage.writeFile(objPath, objJson)
+                if (bytesWritten === objJson.length) {
+                    writeSuccesses.push(true)
+                    resolve()
+                } else {
+                    const message = `verifyWrite(${id}): expected to write ${objJson.length} bytes but wrote ${bytesWritten}`
+                    const fail = new MobilettoOrmSyncError(id, message)
+                    logger.warn(message)
+                    resolve(fail)
+                }
+            } catch (e) {
+                logger.warn(`verifyWrite(${id}): error: ${JSON.stringify(e)}`)
+                resolve(e)
+            }
+        }))
         // write index values, if they don't already exist
         for (const fieldName of Object.keys(typeDef.fields)) {
             const field = typeDef.fields[fieldName]
@@ -81,7 +100,8 @@ const verifyWrite = async (repository, storages, typeDef, id, obj) => {
                         }
                         resolve()
                     } catch (e) {
-                        reject(e)
+                        logger.warn(`verifyWrite(${id}, index=${idxPath}): error: ${JSON.stringify(e)}`)
+                        resolve(e)
                     }
                 }))
             }
@@ -89,38 +109,46 @@ const verifyWrite = async (repository, storages, typeDef, id, obj) => {
     }
     await Promise.all(writePromises)
 
-    const readPromises = []
-    const failedWrites = []
-    for (const storage of storages) {
-        failedWrites.push(storage.name)
-    }
-    for (const storage of storages) {
-        readPromises.push(new Promise(async (resolve, reject) => {
-            try {
-                const found = await repository.findById(id, { removed: true })
-                if (JSON.stringify(found) !== objJson) {
-                    logger.warn(`verifyWrite: failedWrite to ${storage.name}`)
-                } else {
-                    const idx = failedWrites.indexOf(storage.name)
-                    if (idx !== -1) {
-                        failedWrites.splice(idx, 1)
+    let failure = null
+    if (writeSuccesses.length < expectedSuccessCount) {
+        failure = new MobilettoOrmSyncError(id, `verifyWrite(${id}): insufficient writes: writeSuccesses.length (${writeSuccesses.length}) < expectedSuccessCount (${expectedSuccessCount})`)
+
+    } else {
+        const failedWrites = []
+        const confirmedWrites = []
+        for (const storage of storages) {
+            failedWrites.push(storage.name)
+        }
+        try {
+            const allVersions = await repository.findVersionsById(id)
+            for (const storageName of Object.keys(allVersions)) {
+                if (storageName in allVersions) {
+                    const versions = allVersions[storageName]
+                    if (versions.length > 0 && versions[versions.length - 1].object && JSON.stringify(versions[versions.length - 1].object) === objJson) {
+                        const idx = failedWrites.indexOf(storageName)
+                        if (idx !== -1) {
+                            failedWrites.splice(idx, 1)
+                        }
+                        confirmedWrites.push(storageName)
+                    } else {
+                        logger.warn(`verifyWrite(${id}): failedWrite to ${storageName}`)
                     }
                 }
-                resolve(found)
-            } catch (e) {
-                logger.error(`verifyWrite error: ${e}`)
-                reject(new MobilettoOrmSyncError(id, JSON.stringify(e)))
             }
-        }))
+            if (confirmedWrites.length < expectedSuccessCount) {
+                failure = new MobilettoOrmSyncError(id, `verifyWrite(${id}): insufficient writes: confirmedWrites.length (${confirmedWrites.length}) < expectedSuccessCount (${expectedSuccessCount})`)
+            }
+        } catch (e) {
+            logger.warn(`verifyWrite(${id}) error confirming writes via read: ${JSON.stringify(e)}`)
+            failure = new MobilettoOrmSyncError(id, JSON.stringify(e))
+        }
     }
-    await Promise.all(readPromises)
-
-    if (failedWrites.length > 0) {
-        // if not, delete our version and error out
+    if (failure != null) {
+        logger.warn(`verifyWrite(${id}) error confirming writes via read: ${JSON.stringify(failure)}`)
         for (const storage of storages) {
             await storage.remove(objPath)
         }
-        throw new MobilettoOrmSyncError(id, `verifyWrite: failed write: ${id}`)
+        throw failure
     }
     return obj
 }
@@ -188,8 +216,9 @@ class MobilettoOrmTypeDef {
         this.typeName = fsSafeName(config.typeName)
         this.basePath = config.basePath || ''
         this.fields = Object.assign({}, config.fields, DEFAULT_FIELDS)
-        this.maxVersions = config.maxVersions || MAX_VERSIONS
-        this.specificPathRegex  = new RegExp(`^${this.typeName}_[A-Z\\d-]+${OBJ_ID_SEP}_\\d{13,}_[A-Z\\d]{${VERSION_SUFFIX_RAND_LEN},}\\.json$`, 'gi')
+        this.maxVersions = config.maxVersions || DEFAULT_MAX_VERSIONS
+        this.minWrites = config.minWrites || DEFAULT_MIN_WRITES
+        this.specificPathRegex  = new RegExp(`^${this.typeName}_.+?${OBJ_ID_SEP}_\\d{13,}_[A-Z\\d]{${VERSION_SUFFIX_RAND_LEN},}\\.json$`, 'gi')
         this.validators = Object.assign({}, FIELD_VALIDATIONS, config.validators || {})
     }
     validate (thing, current) {
@@ -427,7 +456,7 @@ const repo = (storages, typeDefConfig) => {
                             }
                             // clean up excess versions
                             if (files.length > typeDef.maxVersions) {
-                                for (let i = 0; i < files.length - typeDef.maxVersions; i++) {
+                                for (let i = 0; i < files.length - typeDef.maxVersions + 1; i++) {
                                     storage.remove(files[i].name)
                                 }
                             }
@@ -437,7 +466,7 @@ const repo = (storages, typeDefConfig) => {
                         resolve(found[storage.name])
                     } catch (e) {
                         logger.error(`findById(${id}): ${e}`)
-                        reject(e)
+                        resolve(e)
                     }
                 }))
             }
@@ -457,14 +486,31 @@ const repo = (storages, typeDefConfig) => {
             for (let i = 0; i < sortedFound.length - 1; i++) {
                 const f = sortedFound[i]
                 if (newestJson !== JSON.stringify(f.object)) {
-                    syncPromises.push(f.storage.writeFile(newestPath, newest.data))
+                    syncPromises.push(new Promise((resolve) => {
+                        try {
+                            resolve(f.storage.writeFile(newestPath, newest.data))
+                        } catch (e) {
+                            logger.warn(`findById: storage[${f.storage.name}].writeFile(${newestPath}) failed: ${e}`)
+                            resolve(e)
+                        }
+                    }))
                 }
             }
             for (const missing of absent) {
-                syncPromises.push(missing.writeFile(newestPath, newest.data))
+                syncPromises.push(new Promise((resolve, reject) => {
+                    try {
+                        resolve(missing.writeFile(newestPath, newest.data))
+                    } catch (e) {
+                        logger.warn(`findById: storage[${missing.name}].writeFile(${newestPath}) failed: ${e}`)
+                        resolve()
+                    }
+                }))
             }
-            await Promise.all(syncPromises)
-
+            try {
+                await Promise.all(syncPromises)
+            } catch (e) {
+                logger.warn(`findById: error resolving syncPromises: ${e}`)
+            }
             return newestObj
         },
         async find (predicate, opts = null) {

@@ -19,6 +19,7 @@ Mobiletto supports connections to Amazon S3, Backblaze B2, and local filesystems
   * [Optional Type Parameters](#Optional-Type-Parameters)
     * [Base Path](#Base-Path)
     * [Max Versions](#Max-Versions)
+    * [Min Writes](#Min-Writes)
 * [Caveats](#Caveats)
   * [id Field](#id-field)
 
@@ -216,15 +217,25 @@ The `maxVersions` property specifies how many (most recent) versions of an objec
 
 Older versions are deleted. The default `maxVersions` is 5.
 
+#### Min Writes
+The `minWrites` property specifies how many of the underlying storage must have a successful write
+to consider a create/update operation a success.
+
+If fewer than this many writes succeed, the entire operation fails and any successful writes are deleted.
+
+The default value is 0, which means that *all* writes must succeed. Set to 1 and only a single write must succeed.
+
 ## Caveats
 
-### id Field
-Whatever value you put into the `id` field becomes part of the underlying filename to the JSON representation
-of the object. This means that the ultimate value of the `id` field must be coerced into a filesystem-friendly name.
+### typeName and id Field
+The name of the type, given by `typeName`, and whatever value the `id` field holds will become part of the
+underlying filename to the JSON representation of the object.
 
-mobiletto-orm coerces `id` values using: `encodeURIComponent(id).replaceAll('%', '~')`
+This means that the `typeName` and the `id` field must be coerced into a filesystem-friendly names.
+
+mobiletto-orm coerces these values using: `encodeURIComponent(id).replaceAll('%', '~')`
 
 This invocation ensures that repeated invocations yield the same result.
 
-**Because of a subtle collision risk if your `id` values contain literal `%` and `~` characters,
-these characters are not allowed in `id` values**
+**Because of a subtle collision risk if `typeName` or `id` value contains a literal `%` or `~` character,
+these characters are not allowed in `typeName` or `id` values**
