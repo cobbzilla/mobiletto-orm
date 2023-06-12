@@ -153,6 +153,8 @@ The `typeName` property is a string that designates the name of the type.
 
 Type names must be globally unique within your app.
 
+Type names cannot contain the `%` or `~` characters.
+
 ### Fields
 Every type has some built-in fields:
 * id: the primary key, a unique identifier for each instance of the type

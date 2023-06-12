@@ -60,7 +60,7 @@ function MobilettoOrmValidationError (errors) {
     MobilettoOrmValidationError.prototype.toString = () => JSON.stringify(this)
 }
 
-const normalizeId = val => encodeURIComponent(val).replaceAll('%', '_')
+const normalizeId = fsSafeName
 
 const verifyWrite = async (repository, storages, typeDef, id, obj) => {
     const writePromises = []
@@ -173,12 +173,19 @@ const DEFAULT_FIELDS = {
     }
 }
 
+function fsSafeName(name) {
+    return encodeURIComponent(name).replaceAll('%', '~');
+}
+
 class MobilettoOrmTypeDef {
     constructor(config) {
         if (typeof(config.typeName) !== 'string' || config.typeName.length <= 0) {
             throw new MobilettoOrmError('invalid TypeDefConfig: no typeName provided')
         }
-        this.typeName = config.typeName
+        if (config.typeName.includes('%') || config.typeName.includes('~')) {
+            throw new MobilettoOrmError('invalid TypeDefConfig: typeName cannot contain % or ~ characters')
+        }
+        this.typeName = fsSafeName(config.typeName)
         this.basePath = config.basePath || ''
         this.fields = Object.assign({}, config.fields, DEFAULT_FIELDS)
         this.maxVersions = config.maxVersions || MAX_VERSIONS
