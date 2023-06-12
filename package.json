@@ -1,0 +1,44 @@
+{
+  "name": "mobiletto-orm",
+  "version": "1.0.0",
+    "description": "mobiletto object-relational-mapper (ORM)",
+  "main": "index.js",
+  "keywords": [
+    "storage",
+    "s3",
+    "b2",
+    "simple",
+    "filesystem",
+    "orm",
+    "tool",
+    "mobiletto",
+    "mobiletto-cli"
+  ],
+  "homepage": "https://github.com/cobbzilla/mobiletto-orm",
+  "author": "Jonathan Cobb <udo9jqld@duck.com> (https://github.com/cobbzilla)",
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/cobbzilla"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cobbzilla/mobiletto-orm"
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "test": "mocha --timeout 60000 ./test/*.spec.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.10",
+    "@babel/node": "^7.18.10",
+    "@babel/preset-env": "^7.18.10",
+    "chai": "^4.3.6",
+    "dotenv": "^16.0.1",
+    "mocha": "^10.0.0",
+    "randomstring": "^1.2.2"
+  },
+  "dependencies": {
+    "mobiletto-lite": "^1.1.36",
+    "winston": "^3.8.2"
+  }
+}
