@@ -22,6 +22,7 @@ const typeDefConfig = {
             regex: /^[A-Z]+$/gi
         },
         defaultableField: {
+            required: true,
             default: SOME_DEFAULT_VALUE
         }
     }

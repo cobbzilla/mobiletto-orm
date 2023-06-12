@@ -218,6 +218,9 @@ class MobilettoOrmTypeDef {
                 for (const validator of Object.keys(this.validators)) {
                     if (typeof(field[validator]) !== 'undefined') {
                         if (!this.validators[validator](thing[fieldName], field[validator])) {
+                            if (validator === 'required' && typeof(field.default) !== 'undefined') {
+                                continue
+                            }
                             if (typeof(errors[fieldName]) === 'undefined') {
                                 errors[fieldName] = []
                             }
