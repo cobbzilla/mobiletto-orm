@@ -66,10 +66,11 @@ const normalizeId = fsSafeName
 const verifyWrite = async (repository, storages, typeDef, id, obj) => {
     const writePromises = []
     const writeSuccesses = []
-    const expectedSuccessCount = typeDef.minWrites < 0 ? storages.length : typeDef.minWrites
+    const actualStorages = await resolveStorages(storages);
+    const expectedSuccessCount = typeDef.minWrites < 0 ? actualStorages.length : typeDef.minWrites
     const objPath = typeDef.specificPath(obj)
     const objJson = JSON.stringify(obj)
-    for (const storage of storages) {
+    for (const storage of actualStorages) {
         // write object
         writePromises.push(new Promise(async (resolve, reject) => {
             try {
@@ -116,7 +117,7 @@ const verifyWrite = async (repository, storages, typeDef, id, obj) => {
     } else {
         const failedWrites = []
         const confirmedWrites = []
-        for (const storage of storages) {
+        for (const storage of actualStorages) {
             failedWrites.push(storage.name)
         }
         try {
@@ -145,7 +146,7 @@ const verifyWrite = async (repository, storages, typeDef, id, obj) => {
     }
     if (failure != null) {
         logger.warn(`verifyWrite(${id}) error confirming writes via read: ${JSON.stringify(failure)}`)
-        for (const storage of storages) {
+        for (const storage of actualStorages) {
             await storage.remove(objPath)
         }
         throw failure
