@@ -208,6 +208,47 @@ function fsSafeName(name) {
     return encodeURIComponent(name).replaceAll('%', '~');
 }
 
+const VALID_FIELD_TYPES = ['string', 'number', 'boolean', 'object', 'array']
+
+function determineFieldType(fieldName, field) {
+    let foundType = field.type ? field.type : null
+    if (typeof(field.min) === 'number' ||
+        typeof(field.max) === 'number' ||
+        (typeof(field.regex) === 'string' || (typeof(field.regex) === 'object' && field.regex instanceof RegExp))) {
+        if (foundType != null && foundType !== 'string') {
+            throw new MobilettoOrmError(`invalid TypeDefConfig: field ${fieldName} had incompatible types: ${foundType} / string`)
+        }
+        foundType = 'string'
+    }
+    if (typeof(field.minValue) === 'number' || typeof(field.maxValue) === 'number') {
+        if (foundType != null && foundType !== 'number') {
+            throw new MobilettoOrmError(`invalid TypeDefConfig: field ${fieldName} had incompatible types: ${foundType} / number`)
+        }
+        foundType = 'number'
+    }
+    const defaultType = typeof(field.default)
+    if (defaultType !== 'undefined') {
+        if (foundType != null && foundType !== defaultType) {
+            throw new MobilettoOrmError(`invalid TypeDefConfig: field ${fieldName} had incompatible types: ${foundType} / ${defaultType}`)
+        }
+        foundType = defaultType
+    }
+    if (field.values && Array.isArray(field.values) && field.values.length >= 1) {
+        const vType = typeof(field.values[0])
+        if (foundType != null && foundType !== vType) {
+            throw new MobilettoOrmError(`invalid TypeDefConfig: field ${fieldName} had incompatible types: ${foundType} / ${vType}`)
+        }
+        foundType = vType
+    }
+    if (foundType) {
+        if (!VALID_FIELD_TYPES.includes(foundType)) {
+            throw new MobilettoOrmError(`invalid TypeDefConfig: field ${fieldName} had invalid type: ${foundType}`)
+        }
+        return foundType
+    }
+    return 'string'
+}
+
 class MobilettoOrmTypeDef {
     constructor(config) {
         if (typeof(config.typeName) !== 'string' || config.typeName.length <= 0) {
@@ -220,6 +261,10 @@ class MobilettoOrmTypeDef {
         this.typeName = fsSafeName(config.typeName)
         this.basePath = config.basePath || ''
         this.fields = Object.assign({}, config.fields, DEFAULT_FIELDS)
+        Object.keys(this.fields).forEach(fieldName => {
+            const field = this.fields[fieldName]
+            field.type = determineFieldType(fieldName, field)
+        })
         this.maxVersions = config.maxVersions || DEFAULT_MAX_VERSIONS
         this.minWrites = config.minWrites || DEFAULT_MIN_WRITES
         this.specificPathRegex  = new RegExp(`^${this.typeName}_.+?${OBJ_ID_SEP}_\\d{13,}_[A-Z\\d]{${VERSION_SUFFIX_RAND_LEN},}\\.json$`, 'gi')
@@ -256,11 +301,21 @@ class MobilettoOrmTypeDef {
         }
         for (const fieldName of Object.keys(this.fields)) {
             const field = this.fields[fieldName]
+            const fieldValueType = typeof(thing[fieldName])
+            const fieldValue = fieldValueType === 'undefined' ? null : thing[fieldName]
             const updatable = typeof (field.updatable) === 'undefined' || !!field.updatable;
             if (isCreate || updatable) {
+                if (field.type && fieldValue != null && field.type !== fieldValueType) {
+                    errors[fieldName] = ['type']
+                    continue
+                }
+                if (field.values && fieldValue && !field.values.includes(fieldValue)) {
+                    errors[fieldName] = ['values']
+                    continue
+                }
                 for (const validator of Object.keys(this.validators)) {
                     if (typeof(field[validator]) !== 'undefined') {
-                        if (!this.validators[validator](thing[fieldName], field[validator])) {
+                        if (!this.validators[validator](fieldValue, field[validator])) {
                             if (validator === 'required' && typeof(field.default) !== 'undefined') {
                                 continue
                             }
@@ -272,16 +327,16 @@ class MobilettoOrmTypeDef {
                     }
                 }
                 if (typeof(errors[fieldName]) === 'undefined') {
-                    let fieldValue = null
-                    if (isCreate && typeof(field.default) !== 'undefined' && (typeof(thing[fieldName]) !== 'string' || thing[fieldName].length === 0)) {
-                        fieldValue = field.default
+                    let val = null
+                    if (isCreate && typeof(field.default) !== 'undefined' && (fieldValueType !== 'string' || fieldValue.length === 0)) {
+                        val = field.default
                     } else {
-                        fieldValue = thing[fieldName]
+                        val = fieldValue
                     }
                     if (field.normalize) {
-                        validated[fieldName] = field.normalize(fieldValue)
+                        validated[fieldName] = field.normalize(val)
                     } else {
-                        validated[fieldName] = fieldValue
+                        validated[fieldName] = val
                     }
                 }
             }
@@ -291,8 +346,20 @@ class MobilettoOrmTypeDef {
         }
         return validated
     }
+
     id (thing) {
-        return normalizeId(thing.id)
+        let foundId = null
+        if (typeof(thing.id) === 'string' && thing.id.length > 0) {
+            foundId = thing.id
+        } else if (this.alternateIdFields) {
+            for (const alt of this.alternateIdFields) {
+                if (typeof(thing[alt]) === 'string') {
+                    foundId = thing[alt]
+                    break
+                }
+            }
+        }
+        return foundId != null ? normalizeId(foundId) : null
     }
 
     typePath () { return (this.basePath.length > 0 ? this.basePath + '/' : '') + this.typeName }

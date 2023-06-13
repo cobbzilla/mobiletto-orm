@@ -17,13 +17,21 @@ const typeDefConfig = {
             minValue: -3,
             maxValue: 500
         },
-        comments: {},
+        comments: {
+            type: 'string'
+        },
         alphaOnly: {
             regex: /^[A-Z]+$/gi
         },
         defaultableField: {
             required: true,
             default: SOME_DEFAULT_VALUE
+        },
+        impliedBoolean: {
+            default: false
+        },
+        restricted: {
+            values: [1, 2, 3]
         }
     }
 }
@@ -126,6 +134,16 @@ describe('validation test', async () => {
             expect(e.errors['alphaOnly'][0]).equals('regex', 'expected alphaOnly.regex error')
         }
     })
+    it("fails to create an object where a value is not one of a specific set", async () => {
+        try {
+            await test.repo.create({ id: rand(10), value: rand(20), restricted: 42 })
+        } catch (e) {
+            expect(e).instanceof(MobilettoOrmValidationError, 'incorrect exception type')
+            expect(Object.keys(e.errors).length).equals(1, 'expected 1 error')
+            expect(e.errors['restricted'].length).equals(1, 'expected 1 restricted error')
+            expect(e.errors['restricted'][0]).equals('values', 'expected restricted.values error')
+        }
+    })
     it("fails to create an object with multiple validation errors", async () => {
         try {
             await test.repo.create({ value: rand(10), int: 100000, alphaOnly: '222' })
@@ -142,7 +160,29 @@ describe('validation test', async () => {
             expect(e.errors['alphaOnly'][0]).equals('regex', 'expected alphaOnly.regex error')
         }
     })
-    it("successfully creates a valid object, verifying default field is properly set", async () => {
+    it("fails to create an object with multiple type errors", async () => {
+        try {
+            await test.repo.create({ id: 1, value: 42, int: 'foo', alphaOnly: false, comments: [], impliedBoolean: 'true', restricted: 'no' })
+        } catch (e) {
+            expect(e).instanceof(MobilettoOrmValidationError, 'incorrect exception type')
+            expect(Object.keys(e.errors).length).equals(7, 'expected 7 errors')
+            expect(e.errors['id'].length).equals(1, 'expected 1 id error')
+            expect(e.errors['id'][0]).equals('type', 'expected id.type error')
+            expect(e.errors['value'].length).equals(1, 'expected 1 value error')
+            expect(e.errors['value'][0]).equals('type', 'expected value.type error')
+            expect(e.errors['int'].length).equals(1, 'expected 1 value error')
+            expect(e.errors['int'][0]).equals('type', 'expected value.type error')
+            expect(e.errors['alphaOnly'].length).equals(1, 'expected 1 alphaOnly error')
+            expect(e.errors['alphaOnly'][0]).equals('type', 'expected alphaOnly.type error')
+            expect(e.errors['comments'].length).equals(1, 'expected 1 comments error')
+            expect(e.errors['comments'][0]).equals('type', 'expected comments.type error')
+            expect(e.errors['impliedBoolean'].length).equals(1, 'expected 1 impliedBoolean error')
+            expect(e.errors['impliedBoolean'][0]).equals('type', 'expected impliedBoolean.type error')
+            expect(e.errors['restricted'].length).equals(1, 'expected 1 restricted error')
+            expect(e.errors['restricted'][0]).equals('type', 'expected restricted.type error')
+        }
+    })
+    it("successfully creates a valid object, verifying default fields are properly set", async () => {
         const comments = rand(1000)
         const alphaString = 'AbCdEfGh'
         test.newThing = await test.repo.create({
@@ -156,6 +196,8 @@ describe('validation test', async () => {
         expect(test.newThing.comments).eq(comments)
         expect(test.newThing.alphaOnly).eq(alphaString)
         expect(test.newThing.defaultableField).eq(SOME_DEFAULT_VALUE)
+        expect(test.newThing.impliedBoolean).eq(false)
+        expect(test.newThing.restricted).is.null
     })
     it("successfully updates the object but a non-updatable field will not be updated", async () => {
         const newValue = rand(50)

@@ -16,6 +16,7 @@ Mobiletto supports connections to Amazon S3, Backblaze B2, and local filesystems
 * [Type Definitions](#Type-Definitions)
   * [Type Name](#Type-Name) 
   * [Fields](#Fields)
+    * [Field Types](#Field-Types)
   * [Optional Type Parameters](#Optional-Type-Parameters)
     * [Base Path](#Base-Path)
     * [Max Versions](#Max-Versions)
@@ -56,10 +57,11 @@ To access the mobiletto-orm source:
     const orm = require('mobiletto-orm')
 
     # How to create mobiletto connections: https://github.com/cobbzilla/mobiletto/blob/master/README.md#Basic-usage
-    const mobilettoConnections = [ ...array of connections... ]
+    const conns = [ ...array of connections... ]
 
     # Objects and indexes will be replicated across all mobiletto connections
-    const factory = orm.repositoryFactory(mobilettoConnections)
+    # The 'conns' parameter below could also be an async function that returns an array of connections
+    const factory = orm.repositoryFactory(conns)
 
     # Objects are stored in type-specific repositories
     # A repository is backed by a directory on each mobiletto connection
@@ -96,11 +98,11 @@ To access the mobiletto-orm source:
     const email = 'jimmy@example.com'
 
     # Every object has a unique 'id' field that is always required and must be unique
-    # For our Account type, we use the username field as the id
-    # If an object with the same 'id' already exists, a MobilettoOrmValidationError will be thrown
+    # However, if typeDef supports alternateID (default enables) you can use 'username' or 'email' as the 'id'
+    # See Alternate IDs below for more info
+    # If an object with the same id already exists, a MobilettoOrmValidationError will be thrown
     # If a race condition is detected (simultaneous create), a MobilettoOrmSyncError will be throw
     const newUser = repository.create({
-        id: username,
         username: username,
         email: email,
         password: 'some_hashed_password'
@@ -125,9 +127,10 @@ To access the mobiletto-orm source:
     const matchesIncludingRemoved = repository.find(obj => predicate(obj), { removed: true })
 
     # When creating changes, you must always specify the 'id' of the object to update
+    # But alternate IDs (see below) will be used if present
     # Any other changes are optional
     const changes = {
-      id: username,
+      username,
       bio: 'this is my biography'
     }
 
@@ -164,6 +167,7 @@ Every type has some built-in fields:
 * ctime: the creation time: initialized when the object is created, never updated thereafter
 * mtime: the modification time: initialized when the object is created, updated upon every change (update or remove)
 * version: a unique string that identifies the particular version of the object represented by the 'id'
+* type: the data type of the field; if not set explicitly, it will be implied (see [Field Types](#Field-Types)) 
 
 Within a type definition object that you might pass to the repository function, the `fields` property
 is a JSON object, where the keys are the field names, and the values are objects that describes that
@@ -188,7 +192,16 @@ Other field configuration properties are outlined below:
     myExampleField: {
         # this field can only be set upon creation
         # updates to this field will be silently ignored
-        updatable: false
+        updatable: false,
+
+        # the type of the field
+        # valid values are: 'string', 'number', 'boolean', 'array', 'object'
+        # incorrectly-typed values result in a validation errors
+        type: 'string',
+
+        # restrict to a specific set of values
+        # caveat: because this field doesn't define `required: true`, a null value is also valid
+        values: ['Some-Default-Value', 'foo', 'bar'],
 
         # when creating a new object, use this default value if myExampleField is empty
         default: 'Some-Default-Value'
@@ -205,6 +218,17 @@ Other field configuration properties are outlined below:
         max: 1000,           # value must be less than or equal to this maximum numeric value
         regex: /^[\d]+$/gi   # values must match this regex
     }
+
+#### Field Types
+The `type` property of a field definition determines what values are allowed when calling `create` or `update`.
+
+You usually don't have to set the `type` field in most cases, because it can be implied:
+
+ * If the field has a `min`, `max` or `regex` property, the field's implied `type` is `string`
+ * If the field has a `minValue` or `maxValue` property, the field's implied `type` is `number`
+ * If the field has a `default` value, the field's implied `type` will be the type of the `default` value
+ * If the field has a `values` array of valid values, the field's implied `type` will be the type of the first element in the array
+ * If the field doesn't have an explicit `type` and none of the above applies, the field's type will be `string`
 
 ### Optional Type Parameters
 These type definition properties are optional.
