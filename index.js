@@ -354,6 +354,13 @@ function includeRemovedThing(includeRemoved, thing) {
             (typeof (thing.removed) === 'boolean' && thing.removed !== true));
 }
 
+const resolveStorages = async stores => {
+    if (Array.isArray(stores)) return stores
+    if (typeof(stores) === 'function') {
+        return await stores()
+    }
+}
+
 const repo = (storages, typeDefConfig) => {
     const typeDef = new MobilettoOrmTypeDef(typeDefConfig)
     const repository = {
@@ -403,7 +410,7 @@ const repo = (storages, typeDefConfig) => {
                 const field = typeDef.fields[fieldName]
                 if (!!(field.index) && typeof(found[fieldName]) !== 'undefined') {
                     const idxPath = typeDef.indexSpecificPath(fieldName, found)
-                    for (const storage of storages) {
+                    for (const storage of await resolveStorages(storages)) {
                         indexCleanups.push(storage.remove(idxPath))
                     }
                 }
@@ -437,7 +444,7 @@ const repo = (storages, typeDefConfig) => {
             const includeRemoved = !!(opts && opts.removed && opts.removed === true)
 
             // read current version from each storage
-            for (const storage of storages) {
+            for (const storage of await resolveStorages(storages)) {
                 listPromises.push(new Promise(async (resolve, reject) => {
                     try {
                         const files = await storage.safeList(objPath)
@@ -520,7 +527,7 @@ const repo = (storages, typeDefConfig) => {
             // read all things concurrently
             const promises = []
             const found = {}
-            for (const storage of storages) {
+            for (const storage of await resolveStorages(storages)) {
                 promises.push(new Promise(async (resolve, reject) => {
                     try {
                         const typeList = await storage.safeList(typePath)
@@ -571,7 +578,7 @@ const repo = (storages, typeDefConfig) => {
             // read all things concurrently
             const promises = []
             const found = {}
-            for (const storage of storages) {
+            for (const storage of await resolveStorages(storages)) {
                 promises.push(new Promise(async (resolve, reject) => {
                     try {
                         const indexEntries = await storage.safeList(idxPath)
@@ -601,7 +608,7 @@ const repo = (storages, typeDefConfig) => {
             const found = {}
 
             // read current version from each storage
-            for (const storage of storages) {
+            for (const storage of await resolveStorages(storages)) {
                 promises.push(new Promise(async (resolve, reject) => {
                     try {
                         const files = await storage.safeList(objPath)

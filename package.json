@@ -1,7 +1,7 @@
 {
   "name": "mobiletto-orm",
-  "version": "1.0.3",
-    "description": "mobiletto object-relational-mapper (ORM)",
+  "version": "1.0.4",
+  "description": "mobiletto object-relational-mapper (ORM)",
   "main": "index.js",
   "keywords": [
     "storage",

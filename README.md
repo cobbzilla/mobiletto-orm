@@ -145,7 +145,8 @@ The `repositoryFactory` function is the way to start working with mobiletto-orm
 If you're unfamiliar with [how to create mobiletto connections](https://github.com/cobbzilla/mobiletto/blob/master/README.md#Basic-usage),
 now is a great time to read up. It's fairly simple.
 
-When you create a `repositoryFactory`, you pass an array of mobiletto connections.
+When you create a `repositoryFactory`, you pass an array of mobiletto connections, or an async function that
+returns a Promise that resolves to an array of mobiletto connections.
 
 ## Type Definitions
 
