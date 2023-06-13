@@ -201,6 +201,8 @@ const DEFAULT_FIELDS = {
     }
 }
 
+const DEFAULT_ALTERNATE_ID_FIELDS = ['name', 'username', 'email']
+
 function fsSafeName(name) {
     return encodeURIComponent(name).replaceAll('%', '~');
 }
@@ -213,6 +215,7 @@ class MobilettoOrmTypeDef {
         if (config.typeName.includes('%') || config.typeName.includes('~')) {
             throw new MobilettoOrmError('invalid TypeDefConfig: typeName cannot contain % or ~ characters')
         }
+        this.alternateIdFields = config.alternateIdFields || DEFAULT_ALTERNATE_ID_FIELDS
         this.typeName = fsSafeName(config.typeName)
         this.basePath = config.basePath || ''
         this.fields = Object.assign({}, config.fields, DEFAULT_FIELDS)
@@ -225,6 +228,16 @@ class MobilettoOrmTypeDef {
         const isCreate = typeof(current) === 'undefined'
         if (typeof(thing.version) !== 'string' || thing.version.length < MIN_VERSION_STAMP_LENGTH) {
             thing.version = versionStamp()
+        }
+        if (typeof(thing.id) !== 'string' || thing.id.length === 0) {
+            if (this.alternateIdFields) {
+                for (const alt of this.alternateIdFields) {
+                    if (alt in thing) {
+                        thing.id = thing[alt]
+                        break
+                    }
+                }
+            }
         }
         const now = Date.now()
         if (typeof(thing.ctime) !== 'number' || thing.ctime < 0) {

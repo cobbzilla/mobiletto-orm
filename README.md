@@ -20,6 +20,7 @@ Mobiletto supports connections to Amazon S3, Backblaze B2, and local filesystems
     * [Base Path](#Base-Path)
     * [Max Versions](#Max-Versions)
     * [Min Writes](#Min-Writes)
+    * [Alternate IDs](#Alternate-IDs)
 * [Caveats](#Caveats)
   * [id Field](#id-field)
 
@@ -225,6 +226,16 @@ to consider a create/update operation a success.
 If fewer than this many writes succeed, the entire operation fails and any successful writes are deleted.
 
 The default value is 0, which means that *all* writes must succeed. Set to 1 and only a single write must succeed.
+
+#### Alternate IDs
+The `alternateIdFields` property is an array of strings. If an object is passed to `create` or `update` and
+does not have an `id` field, but does have one of these fields, then the first field that has a non-empty
+string value will be used as the `id`.
+
+The default set of `alternateIdFields` is: `['name', 'username', 'email']`
+
+If you prefer that a particular TypeDef should always require an explicitly set `id`, then
+set `alternateIdFields` to `[]` or `null` on your type definition object.
 
 ## Caveats
 

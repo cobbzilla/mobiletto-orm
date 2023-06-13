@@ -188,3 +188,31 @@ describe('CRUD test', async () => {
         expect(all[0].removed).eq(true)
     })
 })
+
+const typeDefAltIdConfig = {
+    typeName: `TestAltIdType_${rand(10)}`,
+    fields: { name: {} }
+}
+
+describe('Alternate ID test', async () => {
+    before(done => initStorage(done, typeDefAltIdConfig))
+    it("findAll should return an empty array", async () => {
+        const all = await test.repo.findAll()
+        expect(all).to.not.be.null
+        expect(all.length).eq(0)
+    })
+    it("creates a thing using an alternate id field", async () => {
+        const name = rand(20);
+        test.newThing = await test.repo.create({name})
+        expect(test.newThing.id).equals(name, 'expected newThing.id to be the same as newThing.name')
+        expect(test.newThing.id).equals(test.newThing.id, 'expected newThing.id to be the same as newThing.name')
+    })
+    it("findAll should return an array containing the thing we just created with an alternate id", async () => {
+        const all = await test.repo.findAll()
+        expect(all).to.not.be.null
+        expect(all.length).eq(1)
+        expect(all[0].id).eq(test.newThing.id)
+        expect(all[0].name).eq(test.newThing.id)
+        expect(all[0].version).eq(test.newThing.version)
+    })
+})
