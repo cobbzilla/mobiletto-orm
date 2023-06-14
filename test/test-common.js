@@ -5,9 +5,10 @@ const fs = require('fs')
 require('dotenv').config()
 
 const { mobiletto, closeRedis } = require('mobiletto-lite')
-const { versionStamp, repositoryFactory, MobilettoOrmError } = require("../index");
-const { logger } = require("../util/logger");
-const randomstring = require("randomstring");
+const { repositoryFactory } = require('../index')
+const { versionStamp, MobilettoOrmError } = require('mobiletto-orm-typedef')
+const { logger } = require('../util/logger')
+const randomstring = require('randomstring')
 
 const rand = count => randomstring.generate(count)
 

@@ -1,5 +1,5 @@
 const { expect, assert } = require('chai')
-const { MobilettoOrmNotFoundError, MobilettoOrmSyncError, MobilettoOrmValidationError} = require('../index')
+const { MobilettoOrmNotFoundError, MobilettoOrmSyncError, MobilettoOrmValidationError } = require('mobiletto-orm-typedef')
 const { initStorage, test, rand } = require('./test-common')
 
 const thingID = 'thing-'+rand(10)

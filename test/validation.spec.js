@@ -1,5 +1,5 @@
 const { expect } = require('chai')
-const { MobilettoOrmValidationError } = require('../index')
+const { MobilettoOrmValidationError } = require('mobiletto-orm-typedef')
 const { initStorage, test, rand } = require('./test-common')
 
 const SOME_DEFAULT_VALUE = rand(10)
