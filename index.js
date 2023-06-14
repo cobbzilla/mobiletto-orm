@@ -210,6 +210,15 @@ function fsSafeName(name) {
 
 const VALID_FIELD_TYPES = ['string', 'number', 'boolean', 'object', 'array']
 
+function determineFieldControl(fieldName, field, fieldType) {
+    if (field.control) return field.control
+    if (fieldType === 'boolean') return 'flag'
+    if (field.multi && Array.isArray(field.multi) && field.multi.length > 0) return 'multi'
+    if (field.values && Array.isArray(field.values) && field.values.length > 0) return 'select'
+    if (fieldName === 'password') return 'password'
+    return 'text'
+}
+
 function determineFieldType(fieldName, field) {
     let foundType = field.type ? field.type : null
     if (typeof(field.min) === 'number' ||
@@ -264,6 +273,7 @@ class MobilettoOrmTypeDef {
         Object.keys(this.fields).forEach(fieldName => {
             const field = this.fields[fieldName]
             field.type = determineFieldType(fieldName, field)
+            field.control = determineFieldControl(fieldName, field, field.type)
         })
         this.maxVersions = config.maxVersions || DEFAULT_MAX_VERSIONS
         this.minWrites = config.minWrites || DEFAULT_MIN_WRITES

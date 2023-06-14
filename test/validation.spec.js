@@ -18,9 +18,10 @@ const typeDefConfig = {
             maxValue: 500
         },
         comments: {
-            type: 'string'
+            control: 'textbox'
         },
         alphaOnly: {
+            control: 'password',
             regex: /^[A-Z]+$/gi
         },
         defaultableField: {
@@ -32,12 +33,36 @@ const typeDefConfig = {
         },
         restricted: {
             values: [1, 2, 3]
+        },
+        multiselect: {
+            multi: ['option-1', 'option-2', 'option-3', 'option-4']
         }
     }
 }
 
 describe('validation test', async () => {
     before(done => initStorage(done, typeDefConfig))
+    it("each field should have the correct implied types and controls", async () => {
+        const fieldDefs = test.repo.typeDef.fields;
+        expect(fieldDefs['id'].type).eq('string')
+        expect(fieldDefs['id'].control).eq('text')
+        expect(fieldDefs['value'].type).eq('string')
+        expect(fieldDefs['value'].control).eq('text')
+        expect(fieldDefs['int'].type).eq('number')
+        expect(fieldDefs['int'].control).eq('text')
+        expect(fieldDefs['comments'].type).eq('string')
+        expect(fieldDefs['comments'].control).eq('textbox')
+        expect(fieldDefs['alphaOnly'].type).eq('string')
+        expect(fieldDefs['alphaOnly'].control).eq('password')
+        expect(fieldDefs['defaultableField'].type).eq('string')
+        expect(fieldDefs['defaultableField'].control).eq('text')
+        expect(fieldDefs['impliedBoolean'].type).eq('boolean')
+        expect(fieldDefs['impliedBoolean'].control).eq('flag')
+        expect(fieldDefs['restricted'].type).eq('number')
+        expect(fieldDefs['restricted'].control).eq('select')
+        expect(fieldDefs['multiselect'].type).eq('string')
+        expect(fieldDefs['multiselect'].control).eq('multi')
+    })
     it("fails to create an object without any required fields", async () => {
         try {
             await test.repo.create({})

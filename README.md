@@ -17,6 +17,7 @@ Mobiletto supports connections to Amazon S3, Backblaze B2, and local filesystems
   * [Type Name](#Type-Name) 
   * [Fields](#Fields)
     * [Field Types](#Field-Types)
+    * [Field Controls](#Field-Controls)
   * [Optional Type Parameters](#Optional-Type-Parameters)
     * [Base Path](#Base-Path)
     * [Max Versions](#Max-Versions)
@@ -208,6 +209,7 @@ Other field configuration properties are outlined below:
     }
 
     myExampleStringField: {
+        control: 'password', # in a user interface, use a password field (do not show the value)
         min: 10,             # minimum string length of 10 characters
         max: 200,            # maximum string length of 200 characters
         regex: /^[A-Z]+$/gi  # values must match this regex
@@ -219,16 +221,49 @@ Other field configuration properties are outlined below:
         regex: /^[\d]+$/gi   # values must match this regex
     }
 
+    myMultivaluedField: {
+        # value must be an array of these values
+        # note: if required is false/undefined, then an empty or null array is also valid
+        multi: ['apple', 'banana', 'peach', 'plum', 'eggplant', 'squash', 'durian', 'pear']
+    }
+
 #### Field Types
 The `type` property of a field definition determines what values are allowed when calling `create` or `update`.
 
-You usually don't have to set the `type` field in most cases, because it can be implied:
+The `type` can be `string`, `number`, `boolean`, `array`, or `object`
+
+The `id` property always has a `type` of `string`
+
+You usually don't have to set the `type` on a field, because it can be implied:
 
  * If the field has a `min`, `max` or `regex` property, the field's implied `type` is `string`
  * If the field has a `minValue` or `maxValue` property, the field's implied `type` is `number`
  * If the field has a `default` value, the field's implied `type` will be the type of the `default` value
  * If the field has a `values` array of valid values, the field's implied `type` will be the type of the first element in the array
  * If the field doesn't have an explicit `type` and none of the above applies, the field's type will be `string`
+
+#### Field Controls
+The `control` field is a suggestion to other code about what kind of user-interface control would be best
+to set the value for this field.
+
+The `control` can be:
+ * `text`: a text box. the default value if nothing more specific can be determined
+ * `password`: a text box that does not show its contents to the user
+ * `textarea`: a larger text editing area
+ * `select`: select one item from a list
+ * `multi`: multi-select 1+ items from a list
+ * `flag`: a yes/no value
+ * `date`: a date selection
+ * `datetime`: a date and time selection
+ * `time`: a time selection
+
+If no `control` is set on a field, the default `control` is:
+
+  * If the field's type is `boolean`, then the `control` is `flag`
+  * If the field has a `multi` array, then the `control` is `multi`
+  * If the field has a `values` array, then the `control` is `select` (for example a single-selection drop-down)
+  * If the field's name is `password`, then the `control` is `password`
+  * If nothing else matches, then the `control` is `text`
 
 ### Optional Type Parameters
 These type definition properties are optional.
