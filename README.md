@@ -259,7 +259,6 @@ The `control` can be:
 
 If no `control` is set on a field, the default `control` is:
 
-  * If the field has `updatable: false`, then the `control` is `label`
   * If the field's type is `boolean`, then the `control` is `flag`
   * If the field has a `multi` array, then the `control` is `multi`
   * If the field has a `values` array, then the `control` is `select` (for example a single-selection drop-down)
