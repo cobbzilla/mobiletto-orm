@@ -249,16 +249,17 @@ to set the value for this field.
 The `control` can be:
  * `text`: a text box. the default value if nothing more specific can be determined
  * `password`: a text box that does not show its contents to the user
+ * `label`: a read-only display view of the value
  * `textarea`: a larger text editing area
  * `select`: select one item from a list
  * `multi`: multi-select 1+ items from a list
  * `flag`: a yes/no value
- * `date`: a date selection
- * `datetime`: a date and time selection
- * `time`: a time selection
+ * `hidden`: do not show this field at all in a user interface
+ * `system`: do not show this field at all in a user interface, even to admins/superusers
 
 If no `control` is set on a field, the default `control` is:
 
+  * If the field has `updatable: false`, then the `control` is `label`
   * If the field's type is `boolean`, then the `control` is `flag`
   * If the field has a `multi` array, then the `control` is `multi`
   * If the field has a `values` array, then the `control` is `select` (for example a single-selection drop-down)

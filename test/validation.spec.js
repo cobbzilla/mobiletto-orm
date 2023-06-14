@@ -45,9 +45,9 @@ describe('validation test', async () => {
     it("each field should have the correct implied types and controls", async () => {
         const fieldDefs = test.repo.typeDef.fields;
         expect(fieldDefs['id'].type).eq('string')
-        expect(fieldDefs['id'].control).eq('text')
+        expect(fieldDefs['id'].control).eq('label')
         expect(fieldDefs['value'].type).eq('string')
-        expect(fieldDefs['value'].control).eq('text')
+        expect(fieldDefs['value'].control).eq('label')
         expect(fieldDefs['int'].type).eq('number')
         expect(fieldDefs['int'].control).eq('text')
         expect(fieldDefs['comments'].type).eq('string')
