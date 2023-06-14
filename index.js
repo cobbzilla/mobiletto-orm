@@ -136,8 +136,10 @@ const resolveStorages = async stores => {
     }
 }
 
-const repo = (storages, typeDefConfig) => {
-    const typeDef = new MobilettoOrmTypeDef(typeDefConfig)
+const repo = (storages, typeDefOrConfig) => {
+    const typeDef = typeDefOrConfig instanceof MobilettoOrmTypeDef
+        ? typeDefOrConfig
+        : new MobilettoOrmTypeDef(typeDefOrConfig)
     const repository = {
         typeDef,
         async create (thing) {
