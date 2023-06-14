@@ -436,5 +436,12 @@ const repositoryFactory = (storages) => {
 }
 
 module.exports = {
-    repositoryFactory
+    repositoryFactory,
+    // re-export mobiletto-orm-typedef exports
+    versionStamp,
+    MobilettoOrmTypeDef,
+    MobilettoOrmError,
+    MobilettoOrmNotFoundError,
+    MobilettoOrmSyncError,
+    MobilettoOrmValidationError
 }
