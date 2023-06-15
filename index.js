@@ -365,22 +365,32 @@ const repo = (storages, typeDefOrConfig) => {
             }
             return Object.values(found).filter(f => f != null)
         },
+        async safeFindBy(field, value, opts = null) {
+            const first = opts && typeof(opts.first) && opts.first === true
+            try {
+                return await this.findBy(field, value, opts)
+            } catch (e) {
+                logger.warn(`safeFindBy(${field}) threw ${e}`)
+                return first ? null : []
+            }
+        },
         async findBy (field, value, opts = null) {
             const idxPath = typeDef.indexPath(field, value)
             const includeRemoved = !!(opts && opts.removed && opts.removed === true)
             const exists = (opts && typeof(opts.exists) === 'boolean' && opts.exists === true)
+            const first = (opts && typeof(opts.first) === 'boolean' && opts.first === true)
 
             // read all things concurrently
             const promises = []
             const found = {}
             let addedAnything = false
             for (const storage of await resolveStorages(storages)) {
-                if (exists && addedAnything) {
+                if ((exists || first) && addedAnything) {
                     break
                 }
                 promises.push(new Promise(async (resolve, reject) => {
                     try {
-                        if (exists && addedAnything) {
+                        if ((exists || first) && addedAnything) {
                             resolve()
                         }
                         const indexEntries = await storage.safeList(idxPath)
@@ -391,7 +401,7 @@ const repo = (storages, typeDefOrConfig) => {
                                 const thing = await repository.findById(id)
                                 if (includeRemovedThing(includeRemoved, thing)) {
                                     found[id] = thing
-                                    if (exists) {
+                                    if (exists || first) {
                                         addedAnything = true
                                         resolve()
                                     }
@@ -406,7 +416,13 @@ const repo = (storages, typeDefOrConfig) => {
             }
             await Promise.all(promises)
             const foundValues = Object.values(found).filter(v => v != null)
-            return exists ? foundValues.length > 0 : foundValues
+            if (exists) {
+                return foundValues.length > 0
+            }
+            if (first) {
+                return foundValues.length > 0 ? foundValues[0] : null
+            }
+            return foundValues
         },
         async findVersionsById (id) {
             const objPath = typeDef.generalPath(id)

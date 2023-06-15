@@ -44,6 +44,11 @@ describe('CRUD test', async () => {
         expect(found).to.not.be.null
         expect(found.version).eq(test.newThing.version)
     })
+    it("should read the thing we just created with safeFindById", async () => {
+        const found = await test.repo.safeFindById(thingID)
+        expect(found).to.not.be.null
+        expect(found.version).eq(test.newThing.version)
+    })
     it("should fail to create a new thing with the same ID", async () => {
         const now = Date.now()
         try {

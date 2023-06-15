@@ -25,6 +25,20 @@ describe('indexes test', async () => {
         expect(all).to.not.be.null
         expect(all.length).eq(0)
     })
+    it("findBy(category) returns empty array", async () => {
+        const found = await test.repo.findBy('category', category)
+        expect(found).to.not.be.null
+        expect(Array.isArray(found)).to.be.true
+        expect(found.length).eq(0)
+    })
+    it("findBy(category, {exists: true}) returns false", async () => {
+        const exists = await test.repo.findBy('category', category, { exists: true })
+        expect(exists).to.be.false
+    })
+    it("findBy(category, {first: true}) returns null", async () => {
+        const found = await test.repo.findBy('category', category, { first: true })
+        expect(found).to.be.null
+    })
     it("create several things", async () => {
         test.newThings = []
         for (let i = 0; i < NUM_THINGS; i++) {
@@ -52,6 +66,22 @@ describe('indexes test', async () => {
         for (let i = 0; i < NUM_THINGS; i++) {
             expect(found.filter(f => JSON.stringify(f) === JSON.stringify(test.newThings[i])).length).eq(1)
         }
+    })
+    it("safeFindBy(category) returns all the things", async () => {
+        const found = await test.repo.safeFindBy('category', category)
+        for (let i = 0; i < NUM_THINGS; i++) {
+            expect(found.filter(f => JSON.stringify(f) === JSON.stringify(test.newThings[i])).length).eq(1)
+        }
+    })
+    it("findBy(category, {exists: true}) returns true", async () => {
+        const exists = await test.repo.findBy('category', category, { exists: true })
+        expect(exists).to.be.true
+    })
+    it("findBy(category, {first: true}) returns the first matching thing found", async () => {
+        const found = await test.repo.findBy('category', category, { first: true })
+        expect(found).to.not.be.null
+        expect(typeof(found)).eq('object')
+        expect(test.newThings.filter(t => JSON.stringify(t) === JSON.stringify(found)).length).eq(1)
     })
     it("should update the category of one thing", async () => {
         const update = Object.assign({}, test.newThings[0], {category: differentCategory})
