@@ -142,6 +142,7 @@ const repo = (storages, typeDefOrConfig) => {
         : new MobilettoOrmTypeDef(typeDefOrConfig)
     const repository = {
         typeDef,
+        validate (thing) { return typeDef.validate(thing) },
         async create (thing) {
             // validate fields
             const obj = typeDef.validate(thing)
