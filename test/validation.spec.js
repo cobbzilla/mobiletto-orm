@@ -15,21 +15,24 @@ const typeDefConfig = {
         },
         int: {
             minValue: -3,
-            maxValue: 500
+            maxValue: 500,
+            tabIndex: 10
         },
         comments: {
             control: 'textbox'
         },
         alphaOnly: {
             control: 'password',
-            regex: /^[A-Z]+$/gi
+            regex: /^[A-Z]+$/gi,
+            tabIndex: 20
         },
         defaultableField: {
             required: true,
             default: SOME_DEFAULT_VALUE
         },
         impliedBoolean: {
-            default: false
+            default: false,
+            tabIndex: -1
         },
         restricted: {
             values: [1, 2, 3]
@@ -44,7 +47,7 @@ const typeDefConfig = {
 describe('validation test', async () => {
     before(done => initStorage(done, typeDefConfig))
     it("each field should have the correct implied types and controls", async () => {
-        const fieldDefs = test.repo.typeDef.fields;
+        const fieldDefs = test.repo.typeDef.fields
         expect(fieldDefs['id'].type).eq('string')
         expect(fieldDefs['id'].control).eq('text')
         expect(fieldDefs['value'].type).eq('string')
@@ -63,6 +66,19 @@ describe('validation test', async () => {
         expect(fieldDefs['restricted'].control).eq('select')
         expect(fieldDefs['multiselect'].type).eq('array')
         expect(fieldDefs['multiselect'].control).eq('multi')
+    })
+    it("typeDef.tabIndexes returns the field names in the correct order", async () => {
+        const tindexes = test.repo.typeDef.tabIndexes()
+        expect(tindexes.length).eq(Object.keys(test.repo.typeDef.fields).length)
+        expect(tindexes[0]).eq('impliedBoolean')
+        expect(tindexes[1]).eq('int')
+        expect(tindexes[2]).eq('alphaOnly')
+        expect(tindexes[3]).eq('value')
+        expect(tindexes[4]).eq('comments')
+        expect(tindexes[5]).eq('defaultableField')
+        expect(tindexes[6]).eq('restricted')
+        expect(tindexes[7]).eq('multiselect')
+        expect(tindexes[8]).eq('id')
     })
     it("fails to create an object without any required fields", async () => {
         try {
