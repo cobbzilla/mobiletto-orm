@@ -1,6 +1,6 @@
 {
   "name": "mobiletto-orm",
-  "version": "1.2.11",
+  "version": "1.2.12",
   "description": "mobiletto object-relational-mapper (ORM)",
   "main": "index.js",
   "keywords": [

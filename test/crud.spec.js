@@ -27,6 +27,9 @@ describe('CRUD test', async () => {
             expect(e.id).equals(thingID, 'incorrect exception.id')
         }
     })
+    it("should return false when checking existence on a thing that does not exist", async () => {
+        expect(await test.repo.exists(thingID)).to.be.false
+    })
     it("should create a new thing", async () => {
         const now = Date.now()
         test.newThing = await test.repo.create({id: thingID, value: thingValue1})
@@ -59,6 +62,9 @@ describe('CRUD test', async () => {
         expect(found['local2']).to.not.be.null
         expect(found['local2'].length).eq(1, 'expected one version on local2')
         expect(JSON.stringify(found['local2'][0].object)).eq(JSON.stringify(test.newThing), 'version mismatch on local1')
+    })
+    it("should return true when checking existence on the thing we just created", async () => {
+        expect(await test.repo.exists(thingID)).to.be.true
     })
     it("findAll should return an array containing the thing we just created", async () => {
         const all = await test.repo.findAll()
@@ -94,6 +100,9 @@ describe('CRUD test', async () => {
         const found = await test.repo.findById(thingID)
         expect(found).to.not.be.null
         expect(found.version).eq(test.updatedThing.version)
+    })
+    it("should return true when checking existence on the thing we just updated", async () => {
+        expect(await test.repo.exists(thingID)).to.be.true
     })
     it("should read the two versions (on each storage) of the thing we just updated", async () => {
         const found = await test.repo.findVersionsById(thingID)

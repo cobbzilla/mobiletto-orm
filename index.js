@@ -213,6 +213,9 @@ const repo = (storages, typeDefOrConfig) => {
             const tombstone = typeDef.tombstone(found)
             return await verifyWrite(repository, storages, typeDef, id, tombstone)
         },
+        async exists (id) {
+            return this.findById(id, { exists: true })
+        },
         async findById (id, opts = null) {
             const objPath = typeDef.generalPath(id)
             const listPromises = []
@@ -255,8 +258,15 @@ const repo = (storages, typeDefOrConfig) => {
                 }))
             }
             await Promise.all(listPromises)
+            const checkExistsOnly = opts && typeof(opts.exists) === 'boolean' && opts.exists === true;
             if (Object.keys(found).length === 0) {
+                if (checkExistsOnly) {
+                    return false
+                }
                 throw new MobilettoOrmNotFoundError(id)
+
+            } else if (checkExistsOnly) {
+                return true
             }
 
             const sortedFound = Object.values(found).sort((f1, f2) => f1.name && f2.name ? f1.name.localeCompare(f2.name) : 0)
