@@ -171,12 +171,13 @@ const repo = (storages, typeDefOrConfig) => {
                 throw new MobilettoOrmSyncError(editedThing.id, 'update: current version is required')
             }
 
-            // validate fields
-            const obj = typeDef.validate(editedThing, current)
-
             // does thing with PK exist? if not, error
-            const id = typeDef.id(obj)
+            const id = typeDef.id(editedThing)
             const found = await findVersion(repository, id, current);
+
+            // validate fields
+            const obj = typeDef.validate(editedThing, found)
+
             if (typeof(obj.version) === 'undefined' || !obj.version || found.version === obj.version) {
                 obj.version = versionStamp()
             }
