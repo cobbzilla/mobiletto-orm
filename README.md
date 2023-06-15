@@ -204,6 +204,17 @@ Other field configuration properties are outlined below:
         # caveat: because this field doesn't define `required: true`, a null value is also valid
         values: ['Some-Default-Value', 'foo', 'bar'],
 
+        # a separate set of labels to use, when presenting the above values in a user interface
+        # if not defined, the `value` array will be used
+        labels: ['the default thing', 'the foo thing', 'the bar thing'],
+
+        # Instead of the above separate `values` and `labels` arrays, use a single `items` array
+        items: [
+          { value: 'Some-Default-Value', label: 'the default thing'},
+          { value: 'foo',                label: 'the foo thing'},
+          { value: 'bar',                label: 'the bar thing'}
+        ]
+
         # when creating a new object, use this default value if myExampleField is empty
         default: 'Some-Default-Value'
     }
