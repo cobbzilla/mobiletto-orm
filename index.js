@@ -216,6 +216,13 @@ const repo = (storages, typeDefOrConfig) => {
         async exists (id) {
             return this.findById(id, { exists: true })
         },
+        async safeFindById (id, opts = null) {
+            try {
+                return await this.findById(id, opts)
+            } catch (e) {
+                return null
+            }
+        },
         async findById (id, opts = null) {
             const objPath = typeDef.generalPath(id)
             const listPromises = []
@@ -361,13 +368,21 @@ const repo = (storages, typeDefOrConfig) => {
         async findBy (field, value, opts = null) {
             const idxPath = typeDef.indexPath(field, value)
             const includeRemoved = !!(opts && opts.removed && opts.removed === true)
+            const exists = (opts && typeof(opts.exists) === 'boolean' && opts.exists === true)
 
             // read all things concurrently
             const promises = []
             const found = {}
+            let addedAnything = false
             for (const storage of await resolveStorages(storages)) {
+                if (exists && addedAnything) {
+                    break
+                }
                 promises.push(new Promise(async (resolve, reject) => {
                     try {
+                        if (exists && addedAnything) {
+                            resolve()
+                        }
                         const indexEntries = await storage.safeList(idxPath)
                         for (const entry of indexEntries) {
                             const id = typeDef.idFromPath(entry.name)
@@ -376,6 +391,10 @@ const repo = (storages, typeDefOrConfig) => {
                                 const thing = await repository.findById(id)
                                 if (includeRemovedThing(includeRemoved, thing)) {
                                     found[id] = thing
+                                    if (exists) {
+                                        addedAnything = true
+                                        resolve()
+                                    }
                                 }
                             }
                         }
@@ -386,7 +405,8 @@ const repo = (storages, typeDefOrConfig) => {
                 }))
             }
             await Promise.all(promises)
-            return Object.values(found).filter(v => v != null)
+            const foundValues = Object.values(found).filter(v => v != null)
+            return exists ? foundValues.length > 0 : foundValues
         },
         async findVersionsById (id) {
             const objPath = typeDef.generalPath(id)

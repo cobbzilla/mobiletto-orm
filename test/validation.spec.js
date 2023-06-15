@@ -35,7 +35,8 @@ const typeDefConfig = {
             values: [1, 2, 3]
         },
         multiselect: {
-            multi: ['option-1', 'option-2', 'option-3', 'option-4']
+            type: 'array',
+            values: ['option-1', 'option-2', 'option-3', 'option-4']
         }
     }
 }
@@ -60,7 +61,7 @@ describe('validation test', async () => {
         expect(fieldDefs['impliedBoolean'].control).eq('flag')
         expect(fieldDefs['restricted'].type).eq('number')
         expect(fieldDefs['restricted'].control).eq('select')
-        expect(fieldDefs['multiselect'].type).eq('string')
+        expect(fieldDefs['multiselect'].type).eq('array')
         expect(fieldDefs['multiselect'].control).eq('multi')
     })
     it("fails to create an object without any required fields", async () => {

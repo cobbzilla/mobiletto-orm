@@ -30,6 +30,9 @@ describe('CRUD test', async () => {
     it("should return false when checking existence on a thing that does not exist", async () => {
         expect(await test.repo.exists(thingID)).to.be.false
     })
+    it("should return null when calling safeFindById on a thing that does not exist", async () => {
+        expect(await test.repo.safeFindById(thingID)).to.be.null
+    })
     it("should create a new thing", async () => {
         const now = Date.now()
         test.newThing = await test.repo.create({id: thingID, value: thingValue1})
