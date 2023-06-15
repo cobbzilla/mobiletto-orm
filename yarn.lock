@@ -3357,10 +3357,10 @@ mobiletto-lite@^1.1.36:
     shasum "^1.0.2"
     winston "^3.8.1"
 
-mobiletto-orm-typedef@^1.0.19:
-  version "1.0.19"
-  resolved "https://registry.yarnpkg.com/mobiletto-orm-typedef/-/mobiletto-orm-typedef-1.0.19.tgz#1753622199bba552ff85a899980467c6f3e82895"
-  integrity sha512-AQmc++GvIvFnH2t0nPxGZ8Y2keRdkHo7xct7xKUdIh3EUpZqj1z9CZs6TSt4xsCl4Ot6NOg+udoy645z2adGWw==
+mobiletto-orm-typedef@^1.0.20:
+  version "1.0.20"
+  resolved "https://registry.yarnpkg.com/mobiletto-orm-typedef/-/mobiletto-orm-typedef-1.0.20.tgz#f887c1addaced53340704a31c102ce2cfe75103b"
+  integrity sha512-chuCq15LJXwgQyz+sFdwFQF5RESflxIj56ItsCix//2h3x1A0C8g/BxfP87xD+mEAiFbIWZQhGZ3M5p38I8Q2Q==
   dependencies:
     randomstring "^1.2.2"
 
