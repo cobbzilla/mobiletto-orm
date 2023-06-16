@@ -346,7 +346,7 @@ const repo = (storages, typeDefOrConfig) => {
                                             // does the thing match the predicate? if so, include in results
                                             // removed things are only included if opts.removed was set
                                             if (thing && predicate(thing) && includeRemovedThing(removed, thing)) {
-                                                found[id] = thing
+                                                found[id] = noRedact ? thing : typeDef.redact(thing)
                                             }
                                         }
                                         resolve2(thing)
@@ -367,9 +367,7 @@ const repo = (storages, typeDefOrConfig) => {
             if (resolved.length !== promises.length) {
                 logger.warn(`find: ${resolved} of ${promises.length} promises resolved`)
             }
-            return Object.values(found)
-                .filter(f => f != null)
-                .map(f => typeDef.redact(f))
+            return Object.values(found).filter(f => f != null)
         },
         async safeFindBy(field, value, opts = null) {
             const first = opts && typeof(opts.first) && opts.first === true
@@ -383,6 +381,7 @@ const repo = (storages, typeDefOrConfig) => {
         async findBy (field, value, opts = null) {
             const idxPath = typeDef.indexPath(field, value)
             const includeRemoved = !!(opts && opts.removed && opts.removed === true)
+            const noRedact = !!(opts && opts.noRedact && opts.noRedact === true)
             const exists = (opts && typeof(opts.exists) === 'boolean' && opts.exists === true)
             const first = (opts && typeof(opts.first) === 'boolean' && opts.first === true)
 
@@ -406,7 +405,7 @@ const repo = (storages, typeDefOrConfig) => {
                                 found[id] = null
                                 const thing = await repository.findById(id)
                                 if (includeRemovedThing(includeRemoved, thing)) {
-                                    found[id] = thing
+                                    found[id] = noRedact ? thing : typeDef.redact(thing)
                                     if (exists || first) {
                                         addedAnything = true
                                         resolve()
@@ -421,9 +420,7 @@ const repo = (storages, typeDefOrConfig) => {
                 }))
             }
             await Promise.all(promises)
-            const foundValues = Object.values(found)
-                .filter(v => v != null)
-                .map(v => typeDef.redact(v))
+            const foundValues = Object.values(found).filter(v => v != null)
             if (exists) {
                 return foundValues.length > 0
             }
