@@ -237,7 +237,7 @@ describe('validation test', async () => {
         });
         expect(test.newThing.int).eq(100)
         expect(test.newThing.comments).eq(comments)
-        expect(test.newThing.alphaOnly).eq(alphaString)
+        expect(test.newThing.alphaOnly).is.null // password fields are redacted, will be null
         expect(test.newThing.defaultableField).eq(SOME_DEFAULT_VALUE)
         expect(test.newThing.impliedBoolean).eq(false)
         expect(test.newThing.restricted).is.null

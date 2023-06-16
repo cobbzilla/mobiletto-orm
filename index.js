@@ -165,7 +165,7 @@ const repo = (storages, typeDefOrConfig) => {
 
             // save thing, then read current version: is it what we just wrote? if not then error
             obj.ctime = obj.mtime = Date.now()
-            return await verifyWrite(repository, storages, typeDef, id, obj)
+            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, obj))
         },
         async update (editedThing, current) {
             if (typeof(current) === 'undefined' || current == null) {
@@ -205,7 +205,7 @@ const repo = (storages, typeDefOrConfig) => {
                 obj.mtime = now
             }
             const toWrite = Object.assign({}, found, obj)
-            return await verifyWrite(repository, storages, typeDef, id, toWrite)
+            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite))
         },
         async remove (id, current = null) {
             // is there a thing that matches current? if not, error
@@ -213,7 +213,7 @@ const repo = (storages, typeDefOrConfig) => {
 
             // write tombstone record, then read current version: is it what we just wrote? if not, error
             const tombstone = typeDef.tombstone(found)
-            return await verifyWrite(repository, storages, typeDef, id, tombstone)
+            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, tombstone))
         },
         async exists (id) {
             return this.findById(id, { exists: true })
@@ -314,7 +314,7 @@ const repo = (storages, typeDefOrConfig) => {
             } catch (e) {
                 logger.warn(`findById: error resolving syncPromises: ${e}`)
             }
-            return newestObj
+            return typeDef.redact(newestObj)
         },
         async find (predicate, opts = null) {
             const typePath = typeDef.typePath()
@@ -365,7 +365,9 @@ const repo = (storages, typeDefOrConfig) => {
             if (resolved.length !== promises.length) {
                 logger.warn(`find: ${resolved} of ${promises.length} promises resolved`)
             }
-            return Object.values(found).filter(f => f != null)
+            return Object.values(found)
+                .filter(f => f != null)
+                .map(f => typeDef.redact(f))
         },
         async safeFindBy(field, value, opts = null) {
             const first = opts && typeof(opts.first) && opts.first === true
@@ -417,7 +419,9 @@ const repo = (storages, typeDefOrConfig) => {
                 }))
             }
             await Promise.all(promises)
-            const foundValues = Object.values(found).filter(v => v != null)
+            const foundValues = Object.values(found)
+                .filter(v => v != null)
+                .map(v => typeDef.redact(v))
             if (exists) {
                 return foundValues.length > 0
             }
@@ -444,8 +448,11 @@ const repo = (storages, typeDefOrConfig) => {
                                 .map(f => {
                                     dataPromises.push(new Promise(async (resolve2, reject2) => {
                                         try {
-                                            f.data = await storage.safeReadFile(f.name)
-                                            f.object = f.data ? JSON.parse(f.data) : null
+                                            const data = await storage.safeReadFile(f.name)
+                                            if (!typeDef.hasRedactions()) {
+                                                f.data = data
+                                            }
+                                            f.object = data ? typeDef.redact(JSON.parse(data)) : null
                                             resolve2(f)
                                         } catch (e2) {
                                             logger.warn(`findVersionsById(${id}): safeReadFile error ${e2}`)
