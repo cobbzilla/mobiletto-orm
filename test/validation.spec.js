@@ -232,7 +232,8 @@ describe('validation test', async () => {
             value: rand(20),
             int: 100,
             alphaOnly: alphaString,
-            comments
+            comments,
+            multiselect: ['option-2', 'option-3']
         });
         expect(test.newThing.int).eq(100)
         expect(test.newThing.comments).eq(comments)
@@ -240,6 +241,9 @@ describe('validation test', async () => {
         expect(test.newThing.defaultableField).eq(SOME_DEFAULT_VALUE)
         expect(test.newThing.impliedBoolean).eq(false)
         expect(test.newThing.restricted).is.null
+        expect(test.newThing.multiselect.length).eq(2)
+        expect(test.newThing.multiselect[0]).eq('option-2')
+        expect(test.newThing.multiselect[1]).eq('option-3')
     })
     it("successfully updates the object but a non-updatable field will not be updated", async () => {
         const newValue = rand(50)
