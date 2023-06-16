@@ -230,7 +230,8 @@ const repo = (storages, typeDefOrConfig) => {
             const listPromises = []
             const found = {}
             const absent = []
-            const includeRemoved = !!(opts && opts.removed && opts.removed === true)
+            const removed = !!(opts && opts.removed && opts.removed === true)
+            const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions()
 
             // read current version from each storage
             for (const storage of await resolveStorages(storages)) {
@@ -242,13 +243,16 @@ const repo = (storages, typeDefOrConfig) => {
                                 .filter(f => f.name && typeDef.isSpecificPath(f.name))
                                 .sort((f1, f2) => f1.name.localeCompare(f2.name))
                             const data = await storage.safeReadFile(files[files.length - 1].name)
-                            const object = JSON.parse(data)
-                            if (!includeRemovedThing(includeRemoved, object)) {
+                            const object = noRedact ? JSON.parse(data) : typeDef.redact(JSON.parse(data))
+                            if (!includeRemovedThing(removed, object)) {
                                 return resolve(null)
                             }
                             found[storage.name] = {
-                                storage, data, object,
+                                storage, object,
                                 name: path.basename(files[files.length - 1].name)
+                            }
+                            if (noRedact) {
+                                found[storage.name].data = data
                             }
                             // clean up excess versions
                             if (files.length > typeDef.maxVersions) {
@@ -282,7 +286,7 @@ const repo = (storages, typeDefOrConfig) => {
 
             // sync: update older/missing versions to the newest version
             const newest = sortedFound[sortedFound.length - 1]
-            const newestObj = JSON.parse(newest.data)
+            const newestObj = newest.object
             const newestJson = JSON.stringify(newestObj)
             const newestPath = typeDef.specificPath(newestObj);
             const syncPromises = []
@@ -314,13 +318,12 @@ const repo = (storages, typeDefOrConfig) => {
             } catch (e) {
                 logger.warn(`findById: error resolving syncPromises: ${e}`)
             }
-            const noRedact = opts && typeof(opts.noRedact) === 'boolean' && opts.noRedact === true
             return noRedact ? newestObj : typeDef.redact(newestObj)
         },
         async find (predicate, opts = null) {
             const typePath = typeDef.typePath()
             const removed = !!(opts && opts.removed && opts.removed === true)
-            const noRedact = !!(opts && opts.noRedact && opts.noRedact === true)
+            const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions()
 
             // read all things concurrently
             const promises = []
@@ -380,8 +383,8 @@ const repo = (storages, typeDefOrConfig) => {
         },
         async findBy (field, value, opts = null) {
             const idxPath = typeDef.indexPath(field, value)
-            const includeRemoved = !!(opts && opts.removed && opts.removed === true)
-            const noRedact = !!(opts && opts.noRedact && opts.noRedact === true)
+            const removed = !!(opts && opts.removed && opts.removed === true)
+            const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions()
             const exists = (opts && typeof(opts.exists) === 'boolean' && opts.exists === true)
             const first = (opts && typeof(opts.first) === 'boolean' && opts.first === true)
 
@@ -403,8 +406,8 @@ const repo = (storages, typeDefOrConfig) => {
                             const id = typeDef.idFromPath(entry.name)
                             if (typeof(found[id]) === 'undefined') {
                                 found[id] = null
-                                const thing = await repository.findById(id)
-                                if (includeRemovedThing(includeRemoved, thing)) {
+                                const thing = await repository.findById(id, {removed, noRedact})
+                                if (includeRemovedThing(removed, thing)) {
                                     found[id] = noRedact ? thing : typeDef.redact(thing)
                                     if (exists || first) {
                                         addedAnything = true
