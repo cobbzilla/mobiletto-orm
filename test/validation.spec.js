@@ -4,6 +4,8 @@ const { initStorage, test, rand } = require('./test-common')
 
 const SOME_DEFAULT_VALUE = rand(10)
 
+const ALPHA_STRING = 'AbCdEfGh'
+
 const typeDefConfig = {
     typeName: `TestType_${rand(10)}`,
     fields: {
@@ -226,12 +228,11 @@ describe('validation test', async () => {
     })
     it("successfully creates a valid object, verifying default fields are properly set", async () => {
         const comments = rand(1000)
-        const alphaString = 'AbCdEfGh'
         test.newThing = await test.repo.create({
             id: rand(10),
             value: rand(20),
             int: 100,
-            alphaOnly: alphaString,
+            alphaOnly: ALPHA_STRING,
             comments,
             multiselect: ['option-2', 'option-3']
         });
@@ -241,6 +242,22 @@ describe('validation test', async () => {
         expect(test.newThing.defaultableField).eq(SOME_DEFAULT_VALUE)
         expect(test.newThing.impliedBoolean).eq(false)
         expect(test.newThing.restricted).is.null
+        expect(test.newThing.multiselect.length).eq(2)
+        expect(test.newThing.multiselect[0]).eq('option-2')
+        expect(test.newThing.multiselect[1]).eq('option-3')
+    })
+    it("successfully finds the object we created, and redacted fields are null", async () => {
+        const found = await test.repo.findById(test.newThing.id)
+        expect(found.int).eq(100)
+        expect(found.alphaOnly).is.null
+        expect(test.newThing.multiselect.length).eq(2)
+        expect(test.newThing.multiselect[0]).eq('option-2')
+        expect(test.newThing.multiselect[1]).eq('option-3')
+    })
+    it("successfully finds the object we created with {noRedact: true}, and redacted fields are not null", async () => {
+        const found = await test.repo.findById(test.newThing.id, { noRedact: true })
+        expect(found.int).eq(100)
+        expect(found.alphaOnly).eq(ALPHA_STRING)
         expect(test.newThing.multiselect.length).eq(2)
         expect(test.newThing.multiselect[0]).eq('option-2')
         expect(test.newThing.multiselect[1]).eq('option-3')

@@ -314,7 +314,8 @@ const repo = (storages, typeDefOrConfig) => {
             } catch (e) {
                 logger.warn(`findById: error resolving syncPromises: ${e}`)
             }
-            return typeDef.redact(newestObj)
+            const noRedact = opts && typeof(opts.noRedact) === 'boolean' && opts.noRedact === true
+            return noRedact ? newestObj : typeDef.redact(newestObj)
         },
         async find (predicate, opts = null) {
             const typePath = typeDef.typePath()
