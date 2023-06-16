@@ -319,7 +319,8 @@ const repo = (storages, typeDefOrConfig) => {
         },
         async find (predicate, opts = null) {
             const typePath = typeDef.typePath()
-            const includeRemoved = !!(opts && opts.removed && opts.removed === true)
+            const removed = !!(opts && opts.removed && opts.removed === true)
+            const noRedact = !!(opts && opts.noRedact && opts.noRedact === true)
 
             // read all things concurrently
             const promises = []
@@ -338,13 +339,13 @@ const repo = (storages, typeDefOrConfig) => {
                                         if (typeof(found[id]) === 'undefined') {
                                             found[id] = null
                                             try {
-                                                thing = await repository.findById(id, { removed: includeRemoved })
+                                                thing = await repository.findById(id, { removed, noRedact })
                                             } catch (e3) {
                                                 logger.warn(`find: findById(${id}): ${e3}`)
                                             }
                                             // does the thing match the predicate? if so, include in results
                                             // removed things are only included if opts.removed was set
-                                            if (thing && predicate(thing) && includeRemovedThing(includeRemoved, thing)) {
+                                            if (thing && predicate(thing) && includeRemovedThing(removed, thing)) {
                                                 found[id] = thing
                                             }
                                         }
