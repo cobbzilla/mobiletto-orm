@@ -1,5 +1,6 @@
 const { initStorage, test, rand } = require("./test-common")
-const { expect } = require("chai")
+const { MobilettoOrmError } = require('mobiletto-orm-typedef')
+const { expect, assert} = require("chai")
 
 const typeDefConfig = {
     typeName: `TestType_${rand(10)}`,
@@ -38,6 +39,30 @@ describe('indexes test', async () => {
     it("findBy(category, {first: true}) returns null", async () => {
         const found = await test.repo.findBy('category', category, { first: true })
         expect(found).to.be.null
+    })
+    it("findBy(comments) throws error because field is not indexed", async () => {
+        try {
+            const found = await test.repo.findBy('comments', 'anything')
+            assert.fail(`expected findBy(comments) to throw MobilettoOrmError for non-existent index, but it returned ${JSON.stringify(found)}`)
+        } catch (e) {
+            expect(e instanceof MobilettoOrmError).to.be.true
+        }
+    })
+    it("findBy(comments, {exists: true}) throws error because field is not indexed", async () => {
+        try {
+            const found = await test.repo.findBy('comments', 'anything', {exists: true})
+            assert.fail(`expected findBy(comments, {exists: true}) to throw MobilettoOrmError for non-existent index, but it returned ${JSON.stringify(found)}`)
+        } catch (e) {
+            expect(e instanceof MobilettoOrmError).to.be.true
+        }
+    })
+    it("findBy(comments, {first: true}) throws error because field is not indexed", async () => {
+        try {
+            const found = await test.repo.findBy('comments', 'anything', {first: true})
+            assert.fail(`expected findBy(comments, {first: true}) to throw MobilettoOrmError for non-existent index, but it returned ${JSON.stringify(found)}`)
+        } catch (e) {
+            expect(e instanceof MobilettoOrmError).to.be.true
+        }
     })
     it("create several things", async () => {
         test.newThings = []

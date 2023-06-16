@@ -34,22 +34,19 @@ const verifyWrite = async (repository, storages, typeDef, id, obj) => {
             }
         }))
         // write index values, if they don't already exist
-        for (const fieldName of Object.keys(typeDef.fields)) {
-            const field = typeDef.fields[fieldName]
-            if (!!(field.index)) {
-                const idxPath = typeDef.indexSpecificPath(fieldName, obj)
-                writePromises.push(new Promise( async (resolve, reject) => {
-                    try {
-                        if (await storage.safeMetadata(idxPath) == null) {
-                            await storage.writeFile(idxPath, '')
-                        }
-                        resolve()
-                    } catch (e) {
-                        logger.warn(`verifyWrite(${id}, index=${idxPath}): error: ${JSON.stringify(e)}`)
-                        resolve(e)
+        for (const fieldName of typeDef.indexes) {
+            const idxPath = typeDef.indexSpecificPath(fieldName, obj)
+            writePromises.push(new Promise( async (resolve, reject) => {
+                try {
+                    if (await storage.safeMetadata(idxPath) == null) {
+                        await storage.writeFile(idxPath, '')
                     }
-                }))
-            }
+                    resolve()
+                } catch (e) {
+                    logger.warn(`verifyWrite(${id}, index=${idxPath}): error: ${JSON.stringify(e)}`)
+                    resolve(e)
+                }
+            }))
         }
     }
     await Promise.all(writePromises)
