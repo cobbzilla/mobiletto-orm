@@ -1,5 +1,5 @@
 const { expect } = require('chai')
-const { MobilettoOrmValidationError } = require('mobiletto-orm-typedef')
+const { MobilettoOrmError, MobilettoOrmValidationError } = require('mobiletto-orm-typedef')
 const { initStorage, test, rand } = require('./test-common')
 
 const SOME_DEFAULT_VALUE = rand(10)
@@ -48,6 +48,34 @@ const typeDefConfig = {
 
 describe('validation test', async () => {
     before(done => initStorage(done, typeDefConfig))
+    it("throws an error if a TypeDef has more than one primary field", async () => {
+        try {
+            test.factory.repository({
+                typeName: `TestType_${rand(10)}`,
+                fields: {
+                    value: { primary: true },
+                    int: {
+                        maxValue: 500,
+                        primary: true
+                    }
+                }
+            })
+        } catch (e) {
+            expect(e instanceof MobilettoOrmError).to.be.true
+        }
+    })
+    it("throws an error if a TypeDef has a primary field with required: false", async () => {
+        try {
+            test.factory.repository({
+                typeName: `TestType_${rand(10)}`,
+                fields: {
+                    value: { primary: true, required: false }
+                }
+            })
+        } catch (e) {
+            expect(e instanceof MobilettoOrmError).to.be.true
+        }
+    })
     it("each field should have the correct implied types and controls", async () => {
         const fieldDefs = test.repo.typeDef.fields
         expect(fieldDefs['id'].type).eq('string')
