@@ -386,6 +386,9 @@ const repo = (storages, typeDefOrConfig) => {
             const compValue = typeDef.fields && typeDef.fields[field] && typeof(typeDef.fields[field].normalize) === 'function'
                 ? typeDef.fields[field].normalize(value)
                 : value
+            if (typeDef.primary && field === typeDef.primary) {
+                return await this.findById(compValue, opts)
+            }
             const idxPath = typeDef.indexPath(field, compValue)
             const removed = !!(opts && opts.removed && opts.removed === true)
             const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions()

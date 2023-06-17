@@ -9,7 +9,8 @@ const typeDefConfig = {
             index: true
         },
         category: {
-            index: true
+            index: true,
+            normalize: v => v.toLowerCase()
         },
         comments: {}
     }
@@ -121,7 +122,8 @@ describe('indexes test', async () => {
         test.updatedThing = await test.repo.update(update, test.newThings[0].version)
         expect(test.updatedThing).to.not.be.null
         expect(test.updatedThing.ctime).eq(test.newThings[0].ctime)
-        expect(test.updatedThing.category).eq(differentCategory)
+        const norm = typeDefConfig.fields.category.normalize
+        expect(norm(test.updatedThing.category)).eq(norm(differentCategory))
     })
     it("findBy(category) returns once less thing than before", async () => {
         const found = await test.repo.findBy('category', category)
@@ -130,5 +132,15 @@ describe('indexes test', async () => {
         for (let i = 1; i < NUM_THINGS; i++) {
             expect(found.filter(f => JSON.stringify(f) === JSON.stringify(test.newThings[i])).length).eq(1)
         }
+    })
+    it("findBy(category) for the normalized different category returns one thing", async () => {
+        const found = await test.repo.findBy('category', differentCategory.toUpperCase())
+        expect(found).to.not.be.null
+        expect(found.length).eq(1)
+        expect(found[0].ctime).eq(test.newThings[0].ctime)
+        expect(found[0].value).eq(test.newThings[0].value)
+        expect(found[0].comments).eq(test.newThings[0].comments)
+        const norm = typeDefConfig.fields.category.normalize
+        expect(found[0].category).eq(norm(differentCategory.toUpperCase()))
     })
 })
