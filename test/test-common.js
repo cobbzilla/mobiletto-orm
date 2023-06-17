@@ -51,6 +51,20 @@ const initTest = t => {
 const test = {}
 initTest(test)
 
+const initFactory = (done) => {
+    initTest(test)
+    getStorages()
+        .then(stores => {
+            test.storages = stores
+            test.factory = repositoryFactory(test.storages)
+        })
+        .catch(e => {
+            console.error(`initFactory error: ${e}`)
+            throw e
+        })
+        .finally(() => done())
+}
+
 const initStorage = (done, typeDefConfig) => {
     initTest(test)
     getStorages()
@@ -160,5 +174,5 @@ after ( (done) => {
 })
 
 module.exports = {
-    initStorage, splitStorage, fallibleStorage, test, rand
+    initFactory, initStorage, splitStorage, fallibleStorage, test, rand
 }
