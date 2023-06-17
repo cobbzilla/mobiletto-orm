@@ -123,7 +123,7 @@ async function findVersion(repository, id, current = null) {
 function includeRemovedThing(includeRemoved, thing) {
     return includeRemoved ||
         (typeof (thing.removed) === 'undefined' ||
-            (typeof (thing.removed) === 'boolean' && thing.removed !== true));
+            (typeof (thing.removed) === 'boolean' && thing.removed !== true))
 }
 
 const resolveStorages = async stores => {
@@ -222,7 +222,11 @@ const repo = (storages, typeDefOrConfig) => {
                 return null
             }
         },
-        async findById (id, opts = null) {
+        async findById (idVal, opts = null) {
+            const id = typeDef.fields && typeDef.fields.id && typeof(typeDef.fields.id.normalize) === 'function'
+                ? typeDef.fields.id.normalize(idVal)
+                : idVal
+
             const objPath = typeDef.generalPath(id)
             const listPromises = []
             const found = {}
@@ -379,11 +383,15 @@ const repo = (storages, typeDefOrConfig) => {
             }
         },
         async findBy (field, value, opts = null) {
-            const idxPath = typeDef.indexPath(field, value)
+            const compValue = typeDef.fields && typeDef.fields[field] && typeof(typeDef.fields[field].normalize) === 'function'
+                ? typeDef.fields[field].normalize(value)
+                : value
+            const idxPath = typeDef.indexPath(field, compValue)
             const removed = !!(opts && opts.removed && opts.removed === true)
             const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions()
             const exists = (opts && typeof(opts.exists) === 'boolean' && opts.exists === true)
             const first = (opts && typeof(opts.first) === 'boolean' && opts.first === true)
+            const predicate = (opts && typeof(opts.predicate) === 'function') ? opts.predicate : null
 
             // read all things concurrently
             const promises = []
@@ -404,7 +412,7 @@ const repo = (storages, typeDefOrConfig) => {
                             if (typeof(found[id]) === 'undefined') {
                                 found[id] = null
                                 const thing = await repository.findById(id, {removed, noRedact})
-                                if (includeRemovedThing(removed, thing)) {
+                                if (includeRemovedThing(removed, thing) && (predicate == null || predicate(thing))) {
                                     found[id] = noRedact ? thing : typeDef.redact(thing)
                                     if (exists || first) {
                                         addedAnything = true

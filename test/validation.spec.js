@@ -272,7 +272,8 @@ describe('validation test', async () => {
         expect(test.updatedThing.value).eq(test.newThing.value)
     })
     it("confirms that the updated object's non-updatable fields have not been updated", async () => {
-        const found = await test.repo.findById(test.newThing.id)
+        const found = await test.repo.safeFindById(test.newThing.id)
+        expect(found).to.be.not.null
         expect(found.version).eq(test.updatedThing.version)
         expect(found.int).eq(test.updatedThing.int)
         expect(found.comments).eq(test.updatedThing.comments)
