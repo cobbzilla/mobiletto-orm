@@ -64,12 +64,24 @@ describe('validation test', async () => {
             expect(e instanceof MobilettoOrmError).to.be.true
         }
     })
-    it("throws an error if a TypeDef has a primary field with required: false", async () => {
+    it("throws an error if a TypeDef has a primary field with {required: false}", async () => {
         try {
             test.factory.repository({
                 typeName: `TestType_${rand(10)}`,
                 fields: {
                     value: { primary: true, required: false }
+                }
+            })
+        } catch (e) {
+            expect(e instanceof MobilettoOrmError).to.be.true
+        }
+    })
+    it("throws an error if a TypeDef has a primary field with {updatable: true}", async () => {
+        try {
+            test.factory.repository({
+                typeName: `TestType_${rand(10)}`,
+                fields: {
+                    value: { primary: true, updatable: true }
                 }
             })
         } catch (e) {
