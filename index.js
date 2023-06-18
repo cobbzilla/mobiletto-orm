@@ -140,6 +140,7 @@ const repo = (storages, typeDefOrConfig) => {
     const repository = {
         typeDef,
         validate (thing) { return typeDef.validate(thing) },
+        id (thing)  { return typeDef.id(thing) },
         async create (thing) {
             // validate fields
             const obj = typeDef.validate(thing)
