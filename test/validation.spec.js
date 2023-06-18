@@ -56,7 +56,7 @@ describe('validation test', async () => {
         expect(fieldDefs['value'].type).eq('string')
         expect(fieldDefs['value'].control).eq('text')
         expect(fieldDefs['int'].type).eq('number')
-        expect(fieldDefs['int'].control).eq('text')
+        expect(fieldDefs['int'].control).eq('range')
         expect(fieldDefs['comments'].type).eq('string')
         expect(fieldDefs['comments'].control).eq('textbox')
         expect(fieldDefs['alphaOnly'].type).eq('string')
