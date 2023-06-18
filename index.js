@@ -139,12 +139,12 @@ const repo = (storages, typeDefOrConfig) => {
         : new MobilettoOrmTypeDef(typeDefOrConfig)
     const repository = {
         typeDef,
-        validate (thing) { return typeDef.validate(thing) },
+        async validate (thing) { return typeDef.validate(thing) },
         id (thing)  { return typeDef.id(thing) },
         idField (thing)  { return typeDef.idField(thing) },
         async create (thing) {
             // validate fields
-            const obj = typeDef.validate(thing)
+            const obj = await typeDef.validate(thing)
 
             // does thing with PK exist? if so, error
             const id = typeDef.id(obj)
@@ -176,7 +176,7 @@ const repo = (storages, typeDefOrConfig) => {
             const found = await findVersion(repository, id, current);
 
             // validate fields
-            const obj = typeDef.validate(editedThing, found)
+            const obj = await typeDef.validate(editedThing, found)
 
             if (typeof(obj.version) === 'undefined' || !obj.version || found.version === obj.version) {
                 obj.version = versionStamp()
