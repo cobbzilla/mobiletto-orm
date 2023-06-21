@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "mobiletto-lite": "^1.1.36",
-    "mobiletto-orm-typedef": "^1.1.13",
+    "mobiletto-orm-typedef": "^1.1.14",
     "winston": "^3.8.2"
   }
 }
