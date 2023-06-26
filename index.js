@@ -1,6 +1,6 @@
 const path = require('path')
 const { logger } = require('./util/logger')
-const { M_DIR } = require('mobiletto-lite')
+const { M_DIR } = require('mobiletto-common')
 const {
     MobilettoOrmTypeDef, versionStamp,
     MobilettoOrmError, MobilettoOrmValidationError,

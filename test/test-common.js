@@ -1,24 +1,25 @@
-const os = require('os')
-const path = require('path')
-const fs = require('fs')
-
 require('dotenv').config()
 
-const { mobiletto, closeRedis } = require('mobiletto-lite')
+const { registerDriver, mobiletto, closeRedis } = require('mobiletto-base')
 const { repositoryFactory } = require('../index')
 const { versionStamp, MobilettoOrmError } = require('mobiletto-orm-typedef')
 const { logger } = require('../util/logger')
 const randomstring = require('randomstring')
+const { indexedDB } = require('fake-indexeddb')
+
+registerDriver('indexeddb', require('mobiletto-driver-indexeddb'))
 
 const rand = count => randomstring.generate(count)
 
 const storageConfigs = () => {
     return {
         local1: {
-            key: path.join(os.tmpdir(), `mobiletto-orm-test1_${versionStamp()}`)
+            key: `mobiletto-orm-test1_${versionStamp()}`,
+            opts: { indexedDB }
         },
         local2: {
-            key: path.join(os.tmpdir(), `mobiletto-orm-test2_${versionStamp()}`)
+            key: `mobiletto-orm-test2_${versionStamp()}`,
+            opts: { indexedDB }
         }
     }
 }
@@ -27,9 +28,9 @@ const getStorages = async () => {
     const storages = []
     const newConfigs = storageConfigs();
     for (const storageName of Object.keys(newConfigs)) {
-        const dirName = newConfigs[storageName].key
-        fs.mkdirSync(dirName)
-        const storage = await mobiletto('local', dirName, '', {})
+        const config = newConfigs[storageName]
+        const dbName = config.key
+        const storage = await mobiletto('indexeddb', dbName, '', config.opts)
         storage.name = storageName
         storages.push(storage)
     }

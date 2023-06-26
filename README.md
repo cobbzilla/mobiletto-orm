@@ -11,6 +11,7 @@ Mobiletto supports connections to Amazon S3, Backblaze B2, and local filesystems
 * [Installation and usage](#Installation-and-usage)
     * [npm package](#npm-package)
     * [From source](#From-source)
+* [Mobiletto Storage Drivers](#Mobiletto-Storage-Drivers)
 * [Quick Start](#Quick-Start)
 * [repositoryFactory](#repositoryFactory)
 * [Type Definitions](#Type-Definitions)
@@ -53,9 +54,37 @@ To access the mobiletto-orm source:
     cd mobiletto-orm
     yarn install
 
+## Mobiletto Storage Drivers
+mobiletto-orm depends on [mobiletto-base](https://github.com/cobbzilla/mobiletto-base),
+which does not include any storage drivers.
+
+To enable a particular storage driver, first add the dependency to your project:
+
+    # Use npm to install the storage driver(s) that you will need 
+    npm i mobiletto-driver-s3
+    npm i mobiletto-driver-b2
+    npm i mobiletto-driver-local
+    npm i mobiletto-driver-indexeddb
+
+    # Or, use yarn to install the storage driver(s) that you will need
+    yarn add mobiletto-driver-s3
+    yarn add mobiletto-driver-b2
+    yarn add mobiletto-driver-local
+    yarn add mobiletto-driver-indexeddb
+
+In your code, before using mobiletto to connect to storage, register the driver:
+
+    const { registerDriver } = require('mobiletto-base')
+    registerDriver('s3', require('mobiletto-driver-s3'))
+    registerDriver('b2', require('mobiletto-driver-b2'))
+    registerDriver('local', require('mobiletto-driver-local'))
+    registerDriver('indexeddb', require('mobiletto-driver-indexeddb'))
+
 ## Quick Start
 
     const orm = require('mobiletto-orm')
+
+    # Register mobiletto storage drivers (described above)
 
     # How to create mobiletto connections: https://github.com/cobbzilla/mobiletto/blob/master/README.md#Basic-usage
     const conns = [ ...array of connections... ]
