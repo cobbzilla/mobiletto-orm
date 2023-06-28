@@ -2209,10 +2209,17 @@ mobiletto-driver-indexeddb@^1.0.1:
     buffer "^6.0.3"
     mobiletto-common "^1.0.2"
 
-mobiletto-orm-typedef@^1.1.14:
-  version "1.1.14"
-  resolved "https://registry.yarnpkg.com/mobiletto-orm-typedef/-/mobiletto-orm-typedef-1.1.14.tgz#b9c4d49b248cb0f50fceea7a2d2f427b59d08386"
-  integrity sha512-uxbVczyiimF3PstliCqsctAu/9ad9ip2Icf9Jnkihr58BvHftACF7+pw5YTpLVRH3//Je+IZ8pvyIdvywFownw==
+mobiletto-driver-local@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/mobiletto-driver-local/-/mobiletto-driver-local-1.0.3.tgz#cc8e5eb6770bcd04b8727d7bddf1bc3de8790da1"
+  integrity sha512-skzpGm2pd8K7h3qGCyWCUeQVrQau8w55XPA7JmyP8kLoPakHaFTRPZrKMqp77cYQnMWcyTKTlCXCJ2mjenWHig==
+  dependencies:
+    mobiletto-common "^1.0.2"
+
+mobiletto-orm-typedef@^1.1.17:
+  version "1.1.17"
+  resolved "https://registry.yarnpkg.com/mobiletto-orm-typedef/-/mobiletto-orm-typedef-1.1.17.tgz#4d3cf236de174dd257d71244193e3b241560e880"
+  integrity sha512-hAdldb4kcJevUGAjH8MeHzxL1kDzkCyZX+iROF1Pbj8DilUjSxFJYuUzjOz5mY3iAVNixK2WFjgmMy0Yhy3ZOg==
   dependencies:
     randomstring "^1.2.2"
     shasum "^1.0.2"

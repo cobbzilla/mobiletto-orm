@@ -150,6 +150,15 @@ describe('CRUD test', async () => {
             expect(e.id).equals(test.updatedThing.id, 'incorrect exception.id')
         }
     })
+    it("should fail to purge a thing that has not been removed", async () => {
+        try {
+            await test.repo.purge(test.updatedThing.id)
+            assert.fail(`expected test.repo.purge to throw MobilettoOrmSyncError for un-removed object, but it returned ${JSON.stringify(removed)}`)
+        } catch (e) {
+            expect(e).instanceof(MobilettoOrmSyncError, 'incorrect exception type')
+            expect(e.id).equals(test.updatedThing.id, 'incorrect exception.id')
+        }
+    })
     it("should remove the thing we just created", async () => {
         test.removedThing = await test.repo.remove(test.updatedThing.id, test.updatedThing.version)
         expect(test.removedThing).to.not.be.null

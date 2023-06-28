@@ -7,7 +7,7 @@ const {
     MobilettoOrmSyncError, MobilettoOrmNotFoundError
 } = require('mobiletto-orm-typedef')
 
-const verifyWrite = async (repository, storages, typeDef, id, obj) => {
+const verifyWrite = async (repository, storages, typeDef, id, obj, removed = null) => {
     const writePromises = []
     const writeSuccesses = []
     const actualStorages = await resolveStorages(storages);
@@ -33,23 +33,41 @@ const verifyWrite = async (repository, storages, typeDef, id, obj) => {
                 resolve(e)
             }
         }))
-        // write index values, if they don't already exist
+        // if remove is null, write index values, if they don't already exist
+        // if remove is non-null, remove index values
         for (const fieldName of typeDef.indexes) {
-            const idxPath = typeDef.indexSpecificPath(fieldName, obj)
-            writePromises.push(new Promise( async (resolve, reject) => {
-                try {
-                    if (await storage.safeMetadata(idxPath) == null) {
-                        await storage.writeFile(idxPath, '')
+            const idxPath = typeDef.indexSpecificPath(fieldName, removed ? removed : obj)
+            let indexPromise
+            if (removed) {
+                indexPromise = new Promise(async (resolve, reject) => {
+                    try {
+                        resolve(await storage.remove(idxPath))
+                    } catch (e) {
+                        logger.warn(`verifyWrite(${id}, index=${idxPath}, delete): error: ${JSON.stringify(e)}`)
+                        resolve(e)
                     }
-                    resolve()
-                } catch (e) {
-                    logger.warn(`verifyWrite(${id}, index=${idxPath}): error: ${JSON.stringify(e)}`)
-                    resolve(e)
-                }
-            }))
+                })
+            } else {
+                indexPromise = new Promise( async (resolve, reject) => {
+                    try {
+                        if (await storage.safeMetadata(idxPath) == null) {
+                            await storage.writeFile(idxPath, '')
+                        }
+                        resolve()
+                    } catch (e) {
+                        logger.warn(`verifyWrite(${id}, index=${idxPath}, create): error: ${JSON.stringify(e)}`)
+                        resolve(e)
+                    }
+                })
+            }
+            writePromises.push(indexPromise)
         }
     }
-    await Promise.all(writePromises)
+    try {
+        await Promise.all(writePromises)
+    } catch (e) {
+        throw e
+    }
 
     let failure = null
     if (writeSuccesses.length < expectedSuccessCount) {
@@ -212,7 +230,26 @@ const repo = (storages, typeDefOrConfig) => {
 
             // write tombstone record, then read current version: is it what we just wrote? if not, error
             const tombstone = typeDef.tombstone(found)
-            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, tombstone))
+            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, tombstone, found))
+        },
+        async purge (idVal) {
+            const id = this.resolveId(idVal)
+            const found = await this.findById(id, { removed: true })
+            if (!typeDef.isTombstone(found)) {
+                throw new MobilettoOrmSyncError(idVal)
+            }
+            const objPath = typeDef.generalPath(id)
+            const deletePromises = []
+            for (const storage of await resolveStorages(storages)) {
+                deletePromises.push(new Promise(async (resolve, reject) => {
+                    try {
+                        resolve(await storage.remove(objPath, {recursive: true}))
+                    } catch (e) {
+                        reject(e)
+                    }
+                }))
+            }
+            return await Promise.all(deletePromises)
         },
         async exists (id) {
             return this.findById(id, { exists: true })
@@ -224,10 +261,17 @@ const repo = (storages, typeDefOrConfig) => {
                 return null
             }
         },
-        async findById (idVal, opts = null) {
-            const id = typeDef.fields && typeDef.fields.id && typeof(typeDef.fields.id.normalize) === 'function'
+        resolveId(idVal) {
+            idVal = typeof (idVal) === 'object'
+                ? typeDef.id(idVal)
+                : idVal
+
+            return typeDef.fields && typeDef.fields.id && typeof (typeDef.fields.id.normalize) === 'function'
                 ? typeDef.fields.id.normalize(idVal)
                 : idVal
+        },
+        async findById (idVal, opts = null) {
+            const id = this.resolveId(idVal)
 
             const objPath = typeDef.generalPath(id)
             const listPromises = []

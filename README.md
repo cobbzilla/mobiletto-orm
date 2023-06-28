@@ -84,42 +84,42 @@ In your code, before using mobiletto to connect to storage, register the driver:
 
     const orm = require('mobiletto-orm')
 
-    # Register mobiletto storage drivers (described above)
+    // Register mobiletto storage drivers (described above)
 
-    # How to create mobiletto connections: https://github.com/cobbzilla/mobiletto/blob/master/README.md#Basic-usage
+    // How to create mobiletto connections: https://github.com/cobbzilla/mobiletto/blob/master/README.md#Basic-usage
     const conns = [ ...array of connections... ]
 
-    # Objects and indexes will be replicated across all mobiletto connections
-    # The 'conns' parameter below could also be an async function that returns an array of connections
+    // Objects and indexes will be replicated across all mobiletto connections
+    // The 'conns' parameter below could also be an async function that returns an array of connections
     const factory = orm.repositoryFactory(conns)
 
-    # Objects are stored in type-specific repositories
-    # A repository is backed by a directory on each mobiletto connection
+    // Objects are stored in type-specific repositories
+    // A repository is backed by a directory on each mobiletto connection
     const repository = factory.repository({
         typeName: 'Account',
         fields: {
             username: {
-                required: true,        # field is required
-                min: 5,                # min 5 chars
-                max: 100,              # max 100 chars
-                regex: /[A-Z\d+]+/gi,  # validate against a regex
-                index: true,           # enable findBy('username', someUsername)
-                updatable: false       # updates will be silently ignored
+                required: true,        // field is required
+                min: 5,                // min 5 chars
+                max: 100,              // max 100 chars
+                regex: /[A-Z\d+]+/gi,  // validate against a regex
+                index: true,           // enable findBy('username', someUsername)
+                updatable: false       // updates will be silently ignored
             },
             email: {
-                required: true,        # field is required
-                min: 8,                # min 8 chars
-                max: 100,              # max 100 chars
-                # a reasonable email regex
+                required: true,        // field is required
+                min: 8,                // min 8 chars
+                max: 100,              // max 100 chars
+                // a reasonable email regex
                 regex: /^[A-Z\d][A-Z\d._%+-]*@[A-Z\d.-]+\.[A-Z]{2,6}$/gi,
-                index: true            # enable findBy('email', someEmailAddress)
+                index: true            // enable findBy('email', someEmailAddress)
             },
             bio: {
-                max: 1000              # max 1000 chars (field is optional)
+                max: 1000              // max 1000 chars (field is optional)
             },
             yearJoined: {
-                minValue: 2023         # minimum numeric value
-                maxValue: 2123         # maxmimum numeric value
+                minValue: 2023         // minimum numeric value
+                maxValue: 2123         // maxmimum numeric value
             }
         }
     })
@@ -127,51 +127,58 @@ In your code, before using mobiletto to connect to storage, register the driver:
     const username = 'some_username'
     const email = 'jimmy@example.com'
 
-    # Every object has a unique 'id' field that is always required and must be unique
-    # However, if typeDef supports alternateID (default enables) you can use 'username' or 'email' as the 'id'
-    # See Alternate IDs below for more info
-    # If an object with the same id already exists, a MobilettoOrmValidationError will be thrown
-    # If a race condition is detected (simultaneous create), a MobilettoOrmSyncError will be throw
+    // Every object has a unique 'id' field that is always required and must be unique
+    // However, if typeDef supports alternateID (default enables) you can use 'username' or 'email' as the 'id'
+    // See Alternate IDs below for more info
+    // If an object with the same id already exists, a MobilettoOrmValidationError will be thrown
+    // If a race condition is detected (simultaneous create), a MobilettoOrmSyncError will be throw
     const newUser = repository.create({
         username: username,
         email: email,
         password: 'some_hashed_password'
     })
 
-    # Find by username. This works because the field has 'index: true'
+    // Find by username. This works because the field has 'index: true'
     const foundByUsername = repository.findBy('username', username)
 
-    # Find by email. This works because the field has 'index: true'
+    // Find by email. This works because the field has 'index: true'
     const foundByEmail = repository.findBy('email', email)
 
-    # Find all accounts
+    // Find all accounts
     const everyone = repository.findAll()
 
-    # Find all accounts, even removed ones
+    // Find all accounts, even removed ones
     const everyone = repository.findAllIncludingRemoved()
 
-    # Find by arbitrary predicate
+    // Find by arbitrary predicate
     const matches = repository.find(obj => functionThatReturnsTrueIfObjectMatches(obj))
 
-    # Find by arbitrary predicate, including removed objects
+    // Find by arbitrary predicate, including removed objects
     const matchesIncludingRemoved = repository.find(obj => predicate(obj), { removed: true })
 
-    # When creating changes, you must always specify the 'id' of the object to update
-    # But alternate IDs (see below) will be used if present
-    # Any other changes are optional
+    // When creating changes, you must always specify the 'id' of the object to update
+    // But alternate IDs (see below) will be used if present
+    // Any other changes are optional
     const changes = {
       username,
       bio: 'this is my biography'
     }
 
-    # When calling 'update' you must supply the previous version, this helps avoid race conditions
-    # If a race condition is detected (simultaneous changes), a MobilettoOrmSyncError will be throw
+    // When calling 'update' you must supply the previous version, this helps avoid race conditions
+    // If a race condition is detected (simultaneous changes), a MobilettoOrmSyncError will be throw
     const updatedUser = repository.update(changes, newUser.version)
 
-    # When calling 'remove' you must supply the previous version, this helps avoid race conditions
-    # If a race condition is detected (simultaneous changes), a MobilettoOrmSyncError will be throw
-    # The tombstone retains the object ID, ctime 
+    // When calling 'remove' you must supply the previous version, this helps avoid race conditions
+    // If a race condition is detected (simultaneous changes), a MobilettoOrmSyncError will be throw
+    // The tombstone retains the object ID, ctime
     const tombstone = repository.remove(username, updatedUser.version)
+
+    // Call 'purge' to clean up all the files. You must call 'remove' before calling 'purge'
+    // The following are all equivalent statements. Note that in our example, username was the
+    // object ID, and is thus also the tombstone id
+    const purged1 = repository.purge(tombstone)
+    const purged2 = repository.purge(tombstone.id)
+    const purged3 = repository.purge(username)
 
 ## repositoryFactory
 The `repositoryFactory` function is the way to start working with mobiletto-orm

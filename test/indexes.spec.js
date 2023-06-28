@@ -1,6 +1,7 @@
 const { initStorage, test, rand } = require("./test-common")
 const { MobilettoOrmError } = require('mobiletto-orm-typedef')
 const { expect, assert} = require("chai")
+const { M_DIR } = require("mobiletto-common");
 
 const typeDefConfig = {
     typeName: `TestType_${rand(10)}`,
@@ -78,7 +79,7 @@ describe('indexes test', async () => {
             }))
         }
     })
-    it("findBy(value) returns each item", async () => {
+    it("findBy(value) returns each thing", async () => {
         for (let i = 0; i < NUM_THINGS; i++) {
             const thing = test.newThings[i]
             const found = await test.repo.findBy('value', thing.value)
@@ -142,5 +143,38 @@ describe('indexes test', async () => {
         expect(found[0].comments).eq(test.newThings[0].comments)
         const norm = typeDefConfig.fields.category.normalize
         expect(found[0].category).eq(norm(differentCategory.toUpperCase()))
+    })
+    it("removes the thing with the different category", async () => {
+        const found = await test.repo.findBy('category', differentCategory.toUpperCase())
+        expect(found).to.not.be.null
+
+        const removed = await test.repo.remove(found[0])
+        expect(removed).to.not.be.null
+    })
+    it("after removal, findBy(category) for the different category returns empty list", async () => {
+        const found = await test.repo.findBy('category', differentCategory.toUpperCase())
+        expect(found).to.not.be.null
+        expect(found.length).eq(0)
+    })
+    it("after removal, safeFindById for the different thing returns null", async () => {
+        const found = await test.repo.safeFindById(test.updatedThing.id)
+        expect(found).to.be.null
+    })
+    it("should remove and purge all the things we created", async () => {
+        for (let i = 0; i < NUM_THINGS; i++) {
+            if (i > 0) { // we already removed thing 0
+                expect(await test.repo.remove(test.newThings[i].id)).is.not.null
+            }
+            const purgeResult = await test.repo.purge(test.newThings[i].id);
+            expect(purgeResult).is.not.null
+            expect(purgeResult.length).eq(test.storages.length)
+        }
+    })
+    it("after purging all the things, each backend storage has no files", async () => {
+        for (const storage of test.storages) {
+            const files = (await storage.list('', { recursive: true }))
+                .filter(f => f.type !== M_DIR)
+            expect(files.length).eq(0)
+        }
     })
 })
