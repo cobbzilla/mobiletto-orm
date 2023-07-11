@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   mobiletto-base:
-    specifier: ^2.0.27
-    version: 2.0.27
+    specifier: ^2.0.29
+    version: 2.0.29
   mobiletto-orm-typedef:
     specifier: ^2.0.20
     version: 2.0.20
@@ -44,11 +44,11 @@ devDependencies:
     specifier: ^4.0.1
     version: 4.0.1
   mobiletto-driver-indexeddb:
-    specifier: ^2.0.8
-    version: 2.0.8
+    specifier: ^2.0.9
+    version: 2.0.9
   mobiletto-driver-local:
-    specifier: ^2.0.4
-    version: 2.0.4
+    specifier: ^2.0.5
+    version: 2.0.5
   mocha:
     specifier: ^10.2.0
     version: 10.2.0
@@ -482,8 +482,8 @@ packages:
       ieee754: 1.2.1
     dev: true
 
-  /bullmq@4.2.0:
-    resolution: {integrity: sha512-zythgYpjnuNil1H+47TlclTNe3YlOup69up26w+TJCo3pNmlmPmhzH+XeDIanGjwQARHUTaiXBBE2QNrNjNilw==}
+  /bullmq@4.2.1:
+    resolution: {integrity: sha512-Ye+CbzvdJytHSbA+zhjbxanW1Vh4+CdHS4Y0lfZ4ATCkBT+6xEmCNSca4/tW+SrrgYxwpKpTNeSy4+D1Nwc+fA==}
     dependencies:
       cron-parser: 4.8.1
       glob: 8.1.0
@@ -955,6 +955,17 @@ packages:
       path-is-absolute: 1.0.1
     dev: true
 
+  /glob@7.2.3:
+    resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    dependencies:
+      fs.realpath: 1.0.0
+      inflight: 1.0.6
+      inherits: 2.0.4
+      minimatch: 3.1.2
+      once: 1.4.0
+      path-is-absolute: 1.0.1
+    dev: true
+
   /glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
@@ -1178,7 +1189,7 @@ packages:
       fecha: 4.2.3
       ms: 2.1.3
       safe-stable-stringify: 2.4.3
-      triple-beam: 1.3.0
+      triple-beam: 1.4.1
     dev: false
 
   /loupe@2.3.6:
@@ -1236,35 +1247,34 @@ packages:
       brace-expansion: 2.0.1
     dev: false
 
-  /mobiletto-base@2.0.27:
-    resolution: {integrity: sha512-GgIke0CX4GjMqcFLuUiHoOgkoNmF7Ogh1Vp7r1RuOsxT/mqnpRyWW874hIbRHotMzxNw6MbFgJbAdXSVj9LK+g==}
+  /mobiletto-base@2.0.29:
+    resolution: {integrity: sha512-RFMA3k1pmbC2/cYaLjk2FKXnE/aUX3qvn/IzqSJn7o0dePkmTcxIHQbL/3KlfktopZl3iNf44XjAbNlPyf3iag==}
     dependencies:
-      bullmq: 4.2.0
+      bullmq: 4.2.1
       ioredis: 5.3.2
       lru-cache: 10.0.0
-      mobiletto-common: 2.0.14
+      mobiletto-common: 2.0.15
       node-fetch-commonjs: 3.3.1
       node-redis-scan: 1.3.6
-      randomstring: 1.3.0
       shasum: 1.0.2
     transitivePeerDependencies:
       - supports-color
     dev: false
 
-  /mobiletto-common@2.0.14:
-    resolution: {integrity: sha512-3zjm7+aDHjFKkUtoJyt80UHZGVATKT8K2/UKTRtAduLM9PoL9X6NO86UrjujkOgAmcScPpQtVChmWvFd/Q/xtA==}
+  /mobiletto-common@2.0.15:
+    resolution: {integrity: sha512-G7YG5XGz61AFRalbOwzIrDdkQetf0RRNxqL+Bq86s1IpXGkmB8ViMylaSETR6nWmjeTo1PV8YX5o+ETSHFZ8Ng==}
     dependencies:
-      winston: 3.9.0
+      winston: 3.10.0
     dev: false
 
-  /mobiletto-driver-indexeddb@2.0.8:
-    resolution: {integrity: sha512-zXpRaqmVmQu0vl5VNoCGL31Jo+D5CZtdmMErbebrAe2J2C6ZUAxxAa+jKsObvvCPSJOSlaL/AZ2hB/dC2J6ZTg==}
+  /mobiletto-driver-indexeddb@2.0.9:
+    resolution: {integrity: sha512-vIzbZ3Db2JDwks6DsShvImM/KJt9/GZbbbCqI7JuobTOsVXHEtlNEeb5qInnNBmRmX3abFB6ZFXNS0OUj1MaQQ==}
     dependencies:
       buffer: 6.0.3
     dev: true
 
-  /mobiletto-driver-local@2.0.4:
-    resolution: {integrity: sha512-wTTaqh570NZchX3gKwK1VKMk5STVjG8Ty/VW+e9/1gmFmLdbUyYYKraiLleJG+0wwroAECBKfsAuthxX5RsRsg==}
+  /mobiletto-driver-local@2.0.5:
+    resolution: {integrity: sha512-vEshUsU4L51BKUwBdt+xHYYn5Uz7vSD0KuTl4YEZenGsUBQCge5HM1c/RMCV3LggN9wRSDweUWzryM3r75N+tQ==}
     dev: true
 
   /mobiletto-orm-typedef@2.0.20:
@@ -1465,22 +1475,11 @@ packages:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
     dev: true
 
-  /randombytes@2.0.3:
-    resolution: {integrity: sha512-lDVjxQQFoCG1jcrP06LNo2lbWp4QTShEXnhActFBwYuHprllQV6VUpwreApsYqCgD+N1mHoqJ/BI/4eV4R2GYg==}
-    dev: false
-
   /randombytes@2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
     dependencies:
       safe-buffer: 5.2.1
     dev: true
-
-  /randomstring@1.3.0:
-    resolution: {integrity: sha512-gY7aQ4i1BgwZ8I1Op4YseITAyiDiajeZOPQUbIq9TPGPhUm5FX59izIaOpmKbME1nmnEiABf28d9K2VSii6BBg==}
-    hasBin: true
-    dependencies:
-      randombytes: 2.0.3
-    dev: false
 
   /readable-stream@3.6.2:
     resolution: {integrity: sha512-9u/sniCrY3D5WdsERHzHE4G2YCXqoG5FTHUiCC4SIbr6XcLZBY05ya9EKjYek9O5xOAwjGq+1JdGBAS7Q9ScoA==}
@@ -1537,7 +1536,7 @@ packages:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
     hasBin: true
     dependencies:
-      glob: 7.2.0
+      glob: 7.2.3
     dev: true
 
   /run-parallel@1.2.0:
@@ -1675,8 +1674,9 @@ packages:
       punycode: 2.3.0
     dev: true
 
-  /triple-beam@1.3.0:
-    resolution: {integrity: sha512-XrHUvV5HpdLmIj4uVMxHggLbFSZYIn7HEWsqePZcI50pco+MPqJ50wMGY794X7AOOhxOBAjbkqfAbEe/QMp2Lw==}
+  /triple-beam@1.4.1:
+    resolution: {integrity: sha512-aZbgViZrg1QNcG+LULa7nhZpJTZSLm/mXnHXnbAbjmN5aSa0y7V+wvv6+4WaBtpISJzThKy+PIPxc1Nq1EJ9mg==}
+    engines: {node: '>= 14.0.0'}
     dev: false
 
   /tslib@1.14.1:
@@ -1792,11 +1792,11 @@ packages:
     dependencies:
       logform: 2.5.1
       readable-stream: 3.6.2
-      triple-beam: 1.3.0
+      triple-beam: 1.4.1
     dev: false
 
-  /winston@3.9.0:
-    resolution: {integrity: sha512-jW51iW/X95BCW6MMtZWr2jKQBP4hV5bIDq9QrIjfDk6Q9QuxvTKEAlpUNAzP+HYHFFCeENhph16s0zEunu4uuQ==}
+  /winston@3.10.0:
+    resolution: {integrity: sha512-nT6SIDaE9B7ZRO0u3UvdrimG0HkB7dSTAgInQnNR2SOPJ4bvq5q79+pXLftKmP52lJGW15+H5MCK0nM9D3KB/g==}
     engines: {node: '>= 12.0.0'}
     dependencies:
       '@colors/colors': 1.5.0
@@ -1808,7 +1808,7 @@ packages:
       readable-stream: 3.6.2
       safe-stable-stringify: 2.4.3
       stack-trace: 0.0.10
-      triple-beam: 1.3.0
+      triple-beam: 1.4.1
       winston-transport: 4.5.0
     dev: false
 
