@@ -1,6 +1,6 @@
 {
   "name": "mobiletto-orm",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "type": "module",
   "description": "mobiletto object-relational-mapper (ORM)",
   "keywords": [
@@ -42,7 +42,6 @@
     "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.3.3",
-    "@types/randomstring": "^1.1.8",
     "@types/shasum": "^1.0.0",
     "@typescript-eslint/eslint-plugin": "^5.61.0",
     "@typescript-eslint/parser": "^5.61.0",
@@ -54,12 +53,11 @@
     "mobiletto-driver-local": "^2.0.4",
     "mocha": "^10.2.0",
     "prettier": "^2.8.8",
-    "randomstring": "^1.2.2",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^5.1.6"
   },
   "dependencies": {
     "mobiletto-base": "^2.0.27",
-    "mobiletto-orm-typedef": "^2.0.19"
+    "mobiletto-orm-typedef": "^2.0.20"
   }
 }
