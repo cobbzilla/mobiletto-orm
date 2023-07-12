@@ -1,6 +1,7 @@
 import { describe, before, it } from "mocha";
 import { expect } from "chai";
-import { splitStorage, test, rand } from "./test-common.js";
+import { rand } from "mobiletto-orm-typedef";
+import { splitStorage, test } from "./test-common.js";
 
 const typeDefConfig = {
     typeName: `TestType_${rand(10)}`,

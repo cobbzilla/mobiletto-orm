@@ -1,7 +1,7 @@
 import { describe, before, it } from "mocha";
 import { expect } from "chai";
-import { MobilettoOrmValidationError } from "mobiletto-orm-typedef";
-import { initStorage, test, rand } from "./test-common.js";
+import { MobilettoOrmValidationError, rand } from "mobiletto-orm-typedef";
+import { initStorage, test } from "./test-common.js";
 
 const SOME_DEFAULT_VALUE = rand(10);
 

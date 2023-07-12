@@ -1,7 +1,12 @@
 import { describe, before, it } from "mocha";
 import { expect, assert } from "chai";
-import { MobilettoOrmNotFoundError, MobilettoOrmSyncError, MobilettoOrmValidationError } from "mobiletto-orm-typedef";
-import { initStorage, test, rand } from "./test-common.js";
+import {
+    MobilettoOrmNotFoundError,
+    MobilettoOrmSyncError,
+    MobilettoOrmValidationError,
+    rand,
+} from "mobiletto-orm-typedef";
+import { initStorage, test } from "./test-common.js";
 
 const thingID = "thing-" + rand(10);
 const thingValue1 = "thingValue1-" + rand(10);

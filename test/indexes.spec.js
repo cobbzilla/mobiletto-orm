@@ -1,7 +1,7 @@
 import { describe, before, it } from "mocha";
 import { expect, assert } from "chai";
-import { initStorage, test, rand } from "./test-common.js";
-import { MobilettoOrmError } from "mobiletto-orm-typedef";
+import { initStorage, test } from "./test-common.js";
+import { MobilettoOrmError, rand } from "mobiletto-orm-typedef";
 import { M_DIR } from "mobiletto-base";
 
 const typeDefConfig = {

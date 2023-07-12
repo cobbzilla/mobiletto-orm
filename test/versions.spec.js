@@ -1,6 +1,7 @@
 import { describe, before, it } from "mocha";
 import { expect } from "chai";
-import { initStorage, test, rand } from "./test-common.js";
+import { rand } from "mobiletto-orm-typedef";
+import { initStorage, test } from "./test-common.js";
 
 const thingID = "thing-" + rand(10);
 
