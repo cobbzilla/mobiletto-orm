@@ -9,7 +9,7 @@ const typeDefConfig = {
     fields: { value: {} },
 };
 
-describe("storage failure test", async () => {
+describe("recovery test", async () => {
     before((done) => fallibleStorage(done, typeDefConfig));
     it("findAll should return an empty array", async () => {
         const all = await test.repo.findAll();
@@ -23,7 +23,7 @@ describe("storage failure test", async () => {
         expect(test.newThing.value).eq(val1);
     });
     it("find new thing", async () => {
-        test.newThing = await test.repo.findById(test.newThing.id);
+        test.newThing = await test.repo.findById(test.newThing._meta.id);
         expect(test.newThing).to.not.be.null;
     });
     it("create a new thing when one storage is failing", async () => {
@@ -37,11 +37,11 @@ describe("storage failure test", async () => {
         const all = await test.repo.findAll();
         expect(all).to.not.be.null;
         expect(all.length).eq(2);
-        expect(all.filter((t) => t.id === test.newThing.id).length).eq(1);
-        expect(all.filter((t) => t.id === test.failedThing.id).length).eq(1);
+        expect(all.filter((t) => t._meta.id === test.newThing._meta.id).length).eq(1);
+        expect(all.filter((t) => t._meta.id === test.failedThing._meta.id).length).eq(1);
     });
     it("findVersionsById should find only one version of failedThing", async () => {
-        const found = await test.repo.findVersionsById(test.failedThing.id);
+        const found = await test.repo.findVersionsById(test.failedThing._meta.id);
         expect(found).to.not.be.null;
         expect(found["local_1"]).to.be.undefined;
         expect(found["local_2"]).to.not.be.null;
@@ -53,12 +53,12 @@ describe("storage failure test", async () => {
     });
     it("Calling findById after failing storage has recovered succeeds and writes missing file", async () => {
         test.unsetFailing(0);
-        const found = await test.repo.findById(test.failedThing.id);
+        const found = await test.repo.findById(test.failedThing._meta.id);
         expect(found).to.not.be.null;
-        expect(found.version).eq(test.failedThing.version);
+        expect(found._meta.version).eq(test.failedThing._meta.version);
     });
     it("findVersionsById should find another version of failedThing", async () => {
-        const found = await test.repo.findVersionsById(test.failedThing.id);
+        const found = await test.repo.findVersionsById(test.failedThing._meta.id);
         expect(found).to.not.be.null;
         expect(found["local_1"]).to.not.be.null;
         expect(found["local_1"].length).eq(1, "expected one versions on local_1");

@@ -1,7 +1,7 @@
 import { after } from "mocha";
 import { registerDriver, mobiletto, logger, shutdownMobiletto } from "mobiletto-base";
 import { repositoryFactory } from "../lib/esm/index.js";
-import { versionStamp, MobilettoOrmError } from "mobiletto-orm-typedef";
+import { MobilettoOrmError, rand } from "mobiletto-orm-typedef";
 import { indexedDB } from "fake-indexeddb";
 
 import { storageClient as idbDriver } from "mobiletto-driver-indexeddb";
@@ -12,17 +12,17 @@ registerDriver("local", localDriver);
 export const storageConfigs = () => {
     return {
         local_1: {
-            // key: `mobiletto-orm-test1_${versionStamp()}`,
+            // key: `mobiletto-orm-test1_${rand()}`,
             // opts: { indexedDB },
-            key: `/tmp/mobiletto-orm-test1_${versionStamp()}`,
+            key: `/tmp/mobiletto-orm-test1_${rand()}`,
             opts: { createIfNotExist: true },
         },
         local_2: {
-            key: `/tmp/mobiletto-orm-test2_${versionStamp()}`,
+            key: `/tmp/mobiletto-orm-test2_${rand()}`,
             opts: { createIfNotExist: true },
         },
         indexeddb_1: {
-            key: `idb_${versionStamp()}`,
+            key: `idb_${rand()}`,
             opts: { indexedDB },
         },
     };

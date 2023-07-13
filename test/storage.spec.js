@@ -29,7 +29,7 @@ describe("storage management test", async () => {
             const all = await repo.findAll();
             expect(all).to.not.be.null;
             expect(all.length).eq(1);
-            expect(all.filter((f) => f.id.startsWith(`Test_${i}_`)).length).eq(1);
+            expect(all.filter((f) => f._meta.id.startsWith(`Test_${i}_`)).length).eq(1);
         }
     });
     it("findAll returns all the things in merged storage", async () => {
@@ -38,7 +38,7 @@ describe("storage management test", async () => {
         expect(all).to.not.be.null;
         expect(all.length).eq(test.repos.length);
         for (let i = 0; i < test.repos.length; i++) {
-            expect(all.filter((f) => f.id.startsWith(`Test_${i}_`)).length).eq(1);
+            expect(all.filter((f) => f._meta.id.startsWith(`Test_${i}_`)).length).eq(1);
         }
     });
     it("findAll returns all the things from individual storage, after merge query", async () => {
@@ -48,7 +48,7 @@ describe("storage management test", async () => {
             expect(all).to.not.be.null;
             expect(all.length).eq(test.repos.length);
             for (let j = 0; j < test.repos.length; j++) {
-                expect(all.filter((f) => f.id.startsWith(`Test_${j}_`)).length).eq(1);
+                expect(all.filter((f) => f._meta.id.startsWith(`Test_${j}_`)).length).eq(1);
             }
         }
     });

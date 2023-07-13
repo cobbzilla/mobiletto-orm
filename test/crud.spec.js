@@ -19,7 +19,6 @@ const typeDefConfig = {
 
 describe("CRUD test", async () => {
     before((done) => initStorage(done, typeDefConfig));
-
     it("findAll should return an empty array", async () => {
         const all = await test.repo.findAll();
         expect(all).to.not.be.null;
@@ -44,21 +43,21 @@ describe("CRUD test", async () => {
     it("should create a new thing", async () => {
         const now = Date.now();
         test.newThing = await test.repo.create({ id: thingID, value: thingValue1 });
-        expect(test.newThing.ctime).greaterThanOrEqual(now, "ctime was too old");
-        expect(test.newThing.mtime).equals(
-            test.newThing.ctime,
+        expect(test.newThing._meta.ctime).greaterThanOrEqual(now, "ctime was too old");
+        expect(test.newThing._meta.mtime).equals(
+            test.newThing._meta.ctime,
             "mtime was different from ctime on newly created thing"
         );
     });
     it("should read the thing we just created", async () => {
         const found = await test.repo.findById(thingID);
         expect(found).to.not.be.null;
-        expect(found.version).eq(test.newThing.version);
+        expect(found._meta.version).eq(test.newThing._meta.version);
     });
     it("should read the thing we just created with safeFindById", async () => {
         const found = await test.repo.safeFindById(thingID);
         expect(found).to.not.be.null;
-        expect(found.version).eq(test.newThing.version);
+        expect(found._meta.version).eq(test.newThing._meta.version);
     });
     it("should fail to create a new thing with the same ID", async () => {
         try {
@@ -87,7 +86,6 @@ describe("CRUD test", async () => {
             "version mismatch on local_1"
         );
     });
-
     it("should return true when checking existence on the thing we just created", async () => {
         expect(await test.repo.exists(thingID)).to.be.true;
     });
@@ -96,7 +94,7 @@ describe("CRUD test", async () => {
         expect(all).to.not.be.null;
         expect(all.length).eq(1);
         expect(all[0].id).eq(test.newThing.id);
-        expect(all[0].version).eq(test.newThing.version);
+        expect(all[0]._meta.version).eq(test.newThing._meta.version);
     });
     it("should fail to update the thing when not passing a current version", async () => {
         try {
@@ -116,15 +114,15 @@ describe("CRUD test", async () => {
     });
     it("should update the thing we just created", async () => {
         const update = Object.assign({}, test.newThing, { value: thingValue2 });
-        test.updatedThing = await test.repo.update(update, test.newThing.version);
+        test.updatedThing = await test.repo.update(update, test.newThing._meta.version);
         expect(test.updatedThing).to.not.be.null;
-        expect(test.updatedThing.ctime).eq(test.newThing.ctime);
+        expect(test.updatedThing._meta.ctime).eq(test.newThing._meta.ctime);
         expect(test.updatedThing.value).eq(thingValue2);
     });
     it("should read the thing we just updated", async () => {
         const found = await test.repo.findById(thingID);
         expect(found).to.not.be.null;
-        expect(found.version).eq(test.updatedThing.version);
+        expect(found._meta.version).eq(test.updatedThing._meta.version);
     });
     it("should return true when checking existence on the thing we just updated", async () => {
         expect(await test.repo.exists(thingID)).to.be.true;
@@ -157,8 +155,8 @@ describe("CRUD test", async () => {
         const all = await test.repo.findAll();
         expect(all).to.not.be.null;
         expect(all.length).eq(1);
-        expect(all[0].id).eq(test.updatedThing.id);
-        expect(all[0].version).eq(test.updatedThing.version);
+        expect(all[0]._meta.id).eq(test.updatedThing._meta.id);
+        expect(all[0]._meta.version).eq(test.updatedThing._meta.version);
     });
     it("should fail to remove a thing that does not exist", async () => {
         const nonExistentID = rand(10);
@@ -176,7 +174,7 @@ describe("CRUD test", async () => {
     });
     it("should fail to remove a thing when passing an out-of-date version", async () => {
         try {
-            const removed = await test.repo.remove(test.updatedThing.id, test.newThing.version);
+            const removed = await test.repo.remove(test.updatedThing._meta.id, test.newThing._meta.version);
             assert.fail(
                 `expected test.repo.remove to throw MobilettoOrmSyncError for obsolete version, but it returned ${JSON.stringify(
                     removed
@@ -184,12 +182,12 @@ describe("CRUD test", async () => {
             );
         } catch (e) {
             expect(e).instanceof(MobilettoOrmSyncError, "incorrect exception type");
-            expect(e.id).equals(test.updatedThing.id, "incorrect exception.id");
+            expect(e.id).equals(test.updatedThing._meta.id, "incorrect exception.id");
         }
     });
     it("should fail to purge a thing that has not been removed", async () => {
         try {
-            const purged = await test.repo.purge(test.updatedThing.id);
+            const purged = await test.repo.purge(test.updatedThing._meta.id);
             assert.fail(
                 `expected test.repo.purge to throw MobilettoOrmSyncError for un-removed object, but it returned ${JSON.stringify(
                     purged
@@ -197,17 +195,17 @@ describe("CRUD test", async () => {
             );
         } catch (e) {
             expect(e).instanceof(MobilettoOrmSyncError, "incorrect exception type");
-            expect(e.id).equals(test.updatedThing.id, "incorrect exception.id");
+            expect(e.id).equals(test.updatedThing._meta.id, "incorrect exception.id");
         }
     });
-    it("should remove the thing we just created", async () => {
-        test.removedThing = await test.repo.remove(test.updatedThing.id, test.updatedThing.version);
+    it("should remove the thing we updated", async () => {
+        test.removedThing = await test.repo.remove(test.updatedThing._meta.id, test.updatedThing._meta.version);
         expect(test.removedThing).to.not.be.null;
-        expect(test.removedThing.removed).eq(true);
-        expect(test.removedThing.mtime).greaterThanOrEqual(test.updatedThing.mtime);
-        expect(test.removedThing.ctime).eq(test.updatedThing.ctime);
-        expect(test.removedThing.id).eq(test.updatedThing.id);
-        expect(test.removedThing.version).not.eq(test.updatedThing.version);
+        expect(test.removedThing._meta.removed).eq(true);
+        expect(test.removedThing._meta.mtime).greaterThanOrEqual(test.updatedThing._meta.mtime);
+        expect(test.removedThing._meta.ctime).eq(test.updatedThing._meta.ctime);
+        expect(test.removedThing._meta.id).eq(test.updatedThing._meta.id);
+        expect(test.removedThing._meta.version).not.eq(test.updatedThing._meta.version);
         expect(typeof test.removedThing.value).eq("undefined");
     });
     it("should read the three versions (on each storage) of the thing we just removed", async () => {
@@ -242,9 +240,10 @@ describe("CRUD test", async () => {
             "version mismatch on local_2 version 3"
         );
     });
+
     it("should fail to read the thing we just removed", async () => {
         try {
-            const found = await test.repo.findById(test.removedThing.id);
+            const found = await test.repo.findById(test.removedThing._meta.id);
             assert.fail(
                 `expected test.repo.findById to throw MobilettoOrmNotFoundError for removed path, but it returned ${JSON.stringify(
                     found
@@ -252,7 +251,7 @@ describe("CRUD test", async () => {
             );
         } catch (e) {
             expect(e).instanceof(MobilettoOrmNotFoundError, "incorrect exception type");
-            expect(e.id).equals(test.removedThing.id, "incorrect exception.id");
+            expect(e.id).equals(test.removedThing._meta.id, "incorrect exception.id");
         }
     });
     it("findAll should return an empty array after removing the thing", async () => {
@@ -264,17 +263,17 @@ describe("CRUD test", async () => {
         const all = await test.repo.findAllIncludingRemoved();
         expect(all).to.not.be.null;
         expect(all.length).eq(1);
-        expect(all[0].id).eq(test.removedThing.id);
-        expect(all[0].version).eq(test.removedThing.version);
-        expect(all[0].removed).eq(true);
+        expect(all[0]._meta.id).eq(test.removedThing._meta.id);
+        expect(all[0]._meta.version).eq(test.removedThing._meta.version);
+        expect(all[0]._meta.removed).eq(true);
     });
     it("findAll with opts {removed:true} should return an array containing the removed thing", async () => {
         const all = await test.repo.findAll({ removed: true });
         expect(all).to.not.be.null;
         expect(all.length).eq(1);
-        expect(all[0].id).eq(test.removedThing.id);
-        expect(all[0].version).eq(test.removedThing.version);
-        expect(all[0].removed).eq(true);
+        expect(all[0]._meta.id).eq(test.removedThing._meta.id);
+        expect(all[0]._meta.version).eq(test.removedThing._meta.version);
+        expect(all[0]._meta.removed).eq(true);
     });
 });
 
@@ -293,15 +292,18 @@ describe("Alternate ID test", async () => {
     it("creates a thing using an alternate id field", async () => {
         const name = rand(20);
         test.newThing = await test.repo.create({ name });
-        expect(test.newThing.id).equals(name, "expected newThing.id to be the same as newThing.name");
-        expect(test.newThing.id).equals(test.newThing.id, "expected newThing.id to be the same as newThing.name");
+        expect(test.newThing._meta.id).equals(name, "expected newThing.id to be the same as newThing.name");
+        expect(test.newThing._meta.id).equals(
+            test.newThing._meta.id,
+            "expected newThing.id to be the same as newThing.name"
+        );
     });
     it("findAll should return an array containing the thing we just created with an alternate id", async () => {
         const all = await test.repo.findAll();
         expect(all).to.not.be.null;
         expect(all.length).eq(1);
-        expect(all[0].id).eq(test.newThing.id);
-        expect(all[0].name).eq(test.newThing.id);
-        expect(all[0].version).eq(test.newThing.version);
+        expect(all[0].name).eq(test.newThing.name);
+        expect(all[0]._meta.id).eq(test.newThing._meta.id);
+        expect(all[0]._meta.version).eq(test.newThing._meta.version);
     });
 });

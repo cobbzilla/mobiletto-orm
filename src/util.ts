@@ -2,7 +2,7 @@ import { logger, MobilettoConnection } from "mobiletto-base";
 import {
     MobilettoOrmError,
     MobilettoOrmIdArg,
-    MobilettoOrmPersistable,
+    MobilettoOrmObject,
     MobilettoOrmSyncError,
     MobilettoOrmTypeDef,
 } from "mobiletto-orm-typedef";
@@ -26,8 +26,8 @@ export const parseCurrent = (current: MobilettoOrmCurrentArg) => {
         throw new MobilettoOrmError("no current version provided");
     }
     let version = current;
-    if (typeof current === "object") {
-        version = current.version;
+    if (typeof current === "object" && current._meta && typeof current._meta.version === "string") {
+        version = current._meta.version;
     }
     if (typeof version !== "string") {
         throw new MobilettoOrmError(`expected current version as string (was ${typeof version})`);
@@ -39,29 +39,31 @@ export const findVersion = async (
     repository: MobilettoOrmRepository,
     id: MobilettoOrmIdArg,
     current?: MobilettoOrmCurrentArg
-): Promise<MobilettoOrmPersistable> => {
-    const found = (await repository.findById(id)) as MobilettoOrmPersistable;
-    const expectedVersion = current == null ? found.version : parseCurrent(current);
+): Promise<MobilettoOrmObject> => {
+    const found = (await repository.findById(id)) as MobilettoOrmObject;
+    const foundVersion = found._meta?.version;
+    const expectedVersion = current == null ? foundVersion : parseCurrent(current);
 
     // is the current version what we expected? if not, error
-    if (found.version !== expectedVersion) {
-        throw new MobilettoOrmSyncError(id, `expected version ${expectedVersion} but found ${found.version}`);
+    if (foundVersion !== expectedVersion) {
+        throw new MobilettoOrmSyncError(id, `expected version ${expectedVersion} but found ${foundVersion}`);
     }
     return found;
 };
 
-export const includeRemovedThing = (includeRemoved: boolean, thing: MobilettoOrmPersistable): boolean =>
+export const includeRemovedThing = (includeRemoved: boolean, thing: MobilettoOrmObject): boolean =>
     includeRemoved ||
-    typeof thing.removed === "undefined" ||
-    (typeof thing.removed === "boolean" && thing.removed !== true);
+    typeof thing._meta === "undefined" ||
+    typeof thing._meta.removed === "undefined" ||
+    (typeof thing._meta.removed === "boolean" && thing._meta.removed !== true);
 
 export const verifyWrite = async (
     repository: MobilettoOrmRepository,
     storages: MobilettoConnection[],
     typeDef: MobilettoOrmTypeDef,
     id: string,
-    obj: MobilettoOrmPersistable,
-    removedObj?: MobilettoOrmPersistable
+    obj: MobilettoOrmObject,
+    removedObj?: MobilettoOrmObject
 ) => {
     const writePromises: Promise<number | string | string[] | Error>[] = [];
     const writeSuccesses: boolean[] = [];
@@ -95,10 +97,7 @@ export const verifyWrite = async (
         // if remove is null, write index values, if they don't already exist
         // if remove is non-null, remove index values
         for (const fieldName of typeDef.indexes) {
-            const idxPath = typeDef.indexSpecificPath(
-                fieldName,
-                (removedObj ? removedObj : obj) as MobilettoOrmPersistable
-            );
+            const idxPath = typeDef.indexSpecificPath(fieldName, (removedObj ? removedObj : obj) as MobilettoOrmObject);
             let indexPromise;
             if (removedObj) {
                 indexPromise = new Promise<string | string[] | Error>((resolve) => {
@@ -213,7 +212,7 @@ export const promiseFindById = (
     removed: boolean,
     noRedact: boolean,
     predicate: MobilettoOrmPredicate | null,
-    found: Record<string, MobilettoOrmPersistable | null>,
+    found: Record<string, MobilettoOrmObject | null>,
     addedAnything: MobilettoFoundMarker
 ): Promise<string> => {
     const typeDef = repository.typeDef;
@@ -222,7 +221,7 @@ export const promiseFindById = (
         repository
             .findById(id, { removed, noRedact })
             .then((thing) => {
-                const obj = thing as MobilettoOrmPersistable;
+                const obj = thing as MobilettoOrmObject;
                 if (includeRemovedThing(removed, obj) && (predicate == null || predicate(obj))) {
                     found[id] = noRedact ? obj : typeDef.redact(obj);
                     if (exists || first) {

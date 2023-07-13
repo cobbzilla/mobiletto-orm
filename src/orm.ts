@@ -2,12 +2,11 @@ import path from "path";
 import { M_DIR, logger, MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
 import {
     MobilettoOrmTypeDef,
-    versionStamp,
     MobilettoOrmValidationError,
     MobilettoOrmSyncError,
     MobilettoOrmNotFoundError,
     MobilettoOrmTypeDefConfig,
-    MobilettoOrmPersistable,
+    MobilettoOrmObject,
     MobilettoOrmIdArg,
     MobilettoOrmError,
     MobilettoOrmNormalizeFunc,
@@ -16,7 +15,7 @@ import {
     MobilettoOrmCurrentArg,
     MobilettoOrmFindOpts,
     MobilettoOrmMetadata,
-    MobilettoOrmPersistableInstance,
+    MobilettoOrmObjectInstance,
     MobilettoOrmPredicate,
     MobilettoOrmRepository,
     MobilettoOrmRepositoryFactory,
@@ -38,19 +37,16 @@ const repo = (
         typeDefOrConfig instanceof MobilettoOrmTypeDef ? typeDefOrConfig : new MobilettoOrmTypeDef(typeDefOrConfig);
     const repository: MobilettoOrmRepository = {
         typeDef,
-        async validate(
-            thing: MobilettoOrmPersistable,
-            current?: MobilettoOrmPersistable
-        ): Promise<MobilettoOrmPersistable> {
+        async validate(thing: MobilettoOrmObject, current?: MobilettoOrmObject): Promise<MobilettoOrmObject> {
             return typeDef.validate(thing, current);
         },
-        id(thing: MobilettoOrmPersistable): string | null {
+        id(thing: MobilettoOrmObject): string | null {
             return typeDef.id(thing);
         },
-        idField(thing: MobilettoOrmPersistable) {
+        idField(thing: MobilettoOrmObject) {
             return typeDef.idField(thing);
         },
-        async create(thing: MobilettoOrmPersistable): Promise<MobilettoOrmPersistable> {
+        async create(thing: MobilettoOrmObject): Promise<MobilettoOrmObject> {
             // validate fields
             const obj = await typeDef.validate(thing);
 
@@ -74,29 +70,36 @@ const repo = (
             }
 
             // save thing, then read current version: is it what we just wrote? if not then error
-            obj.ctime = obj.mtime = Date.now();
+            obj._meta = typeDef.newMeta(id);
             return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, obj));
         },
-        async update(
-            editedThing: MobilettoOrmPersistable,
-            current: MobilettoOrmCurrentArg
-        ): Promise<MobilettoOrmPersistable> {
+        async update(editedThing: MobilettoOrmObject, current: MobilettoOrmCurrentArg): Promise<MobilettoOrmObject> {
+            const id = typeDef.id(editedThing);
+            if (!id) {
+                throw new MobilettoOrmSyncError("undefined", "update: error determining id");
+            }
             if (typeof current === "undefined" || current == null) {
-                throw new MobilettoOrmSyncError(editedThing.id, "update: current version is required");
+                throw new MobilettoOrmSyncError(id, "update: current version is required");
             }
 
             // does thing with PK exist? if not, error
-            const id = typeDef.id(editedThing);
-            if (!id) {
-                throw new MobilettoOrmSyncError(editedThing.id, "update: error determining id");
-            }
             const found = await findVersion(repository, id, current);
+            if (!found._meta) {
+                throw new MobilettoOrmError("update: findVersion returned object without _meta");
+            }
 
             // validate fields
             const obj = await typeDef.validate(editedThing, found);
+            if (!obj._meta) {
+                throw new MobilettoOrmError("update: validate returned object without _meta");
+            }
 
-            if (typeof obj.version === "undefined" || !obj.version || found.version === obj.version) {
-                obj.version = versionStamp();
+            if (
+                typeof obj._meta.version === "undefined" ||
+                !obj._meta.version ||
+                found._meta.version === obj._meta.version
+            ) {
+                obj._meta.version = typeDef.newVersion();
             }
 
             // remove old indexes
@@ -114,27 +117,29 @@ const repo = (
 
             // update thing, then read current version: is it what we just wrote? if not, error
             const now = Date.now();
-            if (typeof obj.ctime !== "number" || obj.ctime < 0) {
-                obj.ctime = now;
+            if (typeof obj._meta.ctime !== "number" || obj._meta.ctime < 0) {
+                obj._meta.ctime = now;
             }
             if (typeof obj.mtime !== "number" || obj.mtime < obj.ctime) {
-                obj.mtime = now;
+                obj._meta.mtime = now;
             }
             const toWrite = Object.assign({}, found, obj);
             return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite));
         },
-        async remove(id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg): Promise<MobilettoOrmPersistable> {
+        async remove(id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg): Promise<MobilettoOrmObject> {
             // is there a thing that matches current? if not, error
-            const found: MobilettoOrmPersistable = await findVersion(repository, id, current);
+            const found: MobilettoOrmObject = await findVersion(repository, id, current);
 
             // write tombstone record, then read current version: is it what we just wrote? if not, error
             const tombstone = typeDef.tombstone(found);
-            return typeDef.redact(await verifyWrite(repository, storages, typeDef, found.id, tombstone, found));
+            return typeDef.redact(
+                await verifyWrite(repository, storages, typeDef, typeDef.id(found), tombstone, found)
+            );
         },
         async purge(idVal: MobilettoOrmIdArg) {
-            const id = this.resolveId(idVal);
+            const id = this.resolveId(idVal, "purge");
             const found = await this.findById(id, { removed: true });
-            if (!typeDef.isTombstone(found as MobilettoOrmPersistable)) {
+            if (!typeDef.isTombstone(found as MobilettoOrmObject)) {
                 throw new MobilettoOrmSyncError(idVal);
             }
             const objPath = typeDef.generalPath(id);
@@ -159,29 +164,26 @@ const repo = (
         async safeFindById(
             id: MobilettoOrmIdArg,
             opts?: MobilettoOrmFindOpts
-        ): Promise<MobilettoOrmPersistable | boolean | null> {
+        ): Promise<MobilettoOrmObject | boolean | null> {
             try {
                 return await this.findById(id, opts);
             } catch (e) {
                 return null;
             }
         },
-        resolveId(idVal: MobilettoOrmIdArg) {
-            idVal = typeof idVal === "object" ? typeDef.id(idVal) : idVal;
-
-            return typeDef.fields && typeDef.fields.id && typeof typeDef.fields.id.normalize === "function"
-                ? typeDef.fields.id.normalize(idVal)
-                : idVal;
+        resolveId(id: MobilettoOrmIdArg, ctx?: string) {
+            const resolved = typeof id === "object" ? this.id(id) : typeof id === "string" && id.length > 0 ? id : null;
+            if (!resolved) {
+                throw new MobilettoOrmError(`resolveId${ctx ? `[${ctx}]` : ""}: unresolvable id: ${id}`);
+            }
+            return resolved;
         },
-        async findById(
-            idVal: MobilettoOrmIdArg,
-            opts?: MobilettoOrmFindOpts
-        ): Promise<MobilettoOrmPersistable | boolean> {
-            const id = this.resolveId(idVal);
+        async findById(idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts): Promise<MobilettoOrmObject | boolean> {
+            const id = this.resolveId(idVal, "findById");
 
             const objPath = typeDef.generalPath(id);
             const listPromises = [];
-            const found: Record<string, MobilettoOrmPersistableInstance> = {};
+            const found: Record<string, MobilettoOrmObjectInstance> = {};
             const absent: MobilettoConnection[] = [];
             const removed = !!(opts && opts.removed && opts.removed === true);
             const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions();
@@ -317,13 +319,13 @@ const repo = (
             }
             return noRedact ? newestObj : typeDef.redact(newestObj);
         },
-        async find(predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts): Promise<MobilettoOrmPersistable[]> {
+        async find(predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts): Promise<MobilettoOrmObject[]> {
             const typePath = typeDef.typePath();
             const removed = !!(opts && opts.removed && opts.removed === true);
             const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions();
 
             const promises: Promise<void>[] = [];
-            const found: Record<string, MobilettoOrmPersistable | null> = {};
+            const found: Record<string, MobilettoOrmObject | null> = {};
 
             // read all things concurrently
             for (const storage of await resolveStorages(storages)) {
@@ -355,7 +357,7 @@ const repo = (
                                                         // does the thing match the predicate? if so, include in results
                                                         // removed things are only included if opts.removed was set
                                                         if (thing) {
-                                                            const obj = thing as MobilettoOrmPersistable;
+                                                            const obj = thing as MobilettoOrmObject;
                                                             if (predicate(obj) && includeRemovedThing(removed, obj)) {
                                                                 found[id] = noRedact ? obj : typeDef.redact(obj);
                                                             }
@@ -399,7 +401,7 @@ const repo = (
                     logger.warn(`find: ${resolved} of ${promises.length} promises resolved`);
                 }
             }
-            return Object.values(found).filter((f) => f != null) as MobilettoOrmPersistable[];
+            return Object.values(found).filter((f) => f != null) as MobilettoOrmObject[];
         },
         async safeFindBy(
             field: string,
@@ -407,7 +409,7 @@ const repo = (
             value: any,
             /* eslint-enable @typescript-eslint/no-explicit-any */
             opts?: MobilettoOrmFindOpts
-        ): Promise<MobilettoOrmPersistable | MobilettoOrmPersistable[] | boolean | null> {
+        ): Promise<MobilettoOrmObject | MobilettoOrmObject[] | boolean | null> {
             const first = (opts && typeof opts.first && opts.first === true) || false;
             try {
                 return await this.findBy(field, value, opts);
@@ -424,7 +426,7 @@ const repo = (
             value: any,
             /* eslint-enable @typescript-eslint/no-explicit-any */
             opts?: MobilettoOrmFindOpts
-        ): Promise<MobilettoOrmPersistable | MobilettoOrmPersistable[] | boolean | null> {
+        ): Promise<MobilettoOrmObject | MobilettoOrmObject[] | boolean | null> {
             const compValue =
                 typeDef.fields &&
                 typeDef.fields[field] &&
@@ -433,7 +435,7 @@ const repo = (
                     ? (typeDef.fields[field].normalize as MobilettoOrmNormalizeFunc)(value)
                     : value;
             if (typeDef.primary && field === typeDef.primary) {
-                return [(await this.findById(compValue, opts)) as MobilettoOrmPersistable];
+                return [(await this.findById(compValue, opts)) as MobilettoOrmObject];
             }
             const idxPath: string = typeDef.indexPath(field, compValue);
             const removed = !!(opts && opts.removed && opts.removed);
@@ -445,7 +447,7 @@ const repo = (
 
             // read all things concurrently
             const storagePromises: Promise<string>[] = [];
-            const found: Record<string, MobilettoOrmPersistable | null> = {};
+            const found: Record<string, MobilettoOrmObject | null> = {};
             const addedAnything: MobilettoFoundMarker = { found: false };
             for (const storage of await resolveStorages(storages)) {
                 const logPrefix = `[1] storage(${storage.name}):`;
@@ -464,7 +466,7 @@ const repo = (
                                     for (const entry of indexEntries) {
                                         if ((exists || first) && addedAnything.found) {
                                             resolve(`${logPrefix} (after listing) already found, resolving`);
-                                            return;
+                                            break;
                                         }
                                         const id = typeDef.idFromPath(entry.name);
                                         if (typeof found[id] === "undefined") {
@@ -511,9 +513,9 @@ const repo = (
             }
             const results = await Promise.all(storagePromises);
             logger.info(`findBy promise results = ${JSON.stringify(results)}`);
-            const foundValues: MobilettoOrmPersistable[] = Object.values(found).filter(
+            const foundValues: MobilettoOrmObject[] = Object.values(found).filter(
                 (v) => v != null
-            ) as MobilettoOrmPersistable[];
+            ) as MobilettoOrmObject[];
             if (exists) {
                 return foundValues.length > 0;
             }
@@ -525,7 +527,6 @@ const repo = (
         async findVersionsById(id: MobilettoOrmIdArg): Promise<Record<string, MobilettoOrmMetadata[]>> {
             const objPath = typeDef.generalPath(id);
             const storagePromises: Promise<void>[] = [];
-            const dataPromises: Promise<MobilettoMetadata>[] = [];
             const found: Record<string, MobilettoMetadata[]> = {};
 
             // read current version from each storage
@@ -535,55 +536,56 @@ const repo = (
                         storage
                             .safeList(objPath)
                             .then((files: MobilettoMetadata[]) => {
+                                const dataPromises: Promise<MobilettoMetadata>[] = [];
                                 if (!files || files.length === 0) {
                                     resolve();
-                                    return;
+                                } else {
+                                    files
+                                        .filter((f: MobilettoMetadata) => f.name && typeDef.isSpecificPath(f.name))
+                                        .sort((f1: MobilettoMetadata, f2: MobilettoMetadata) =>
+                                            f1.name.localeCompare(f2.name)
+                                        )
+                                        .map((f: MobilettoOrmMetadata) => {
+                                            dataPromises.push(
+                                                new Promise<MobilettoOrmMetadata>((resolve2, reject2) => {
+                                                    storage
+                                                        .safeReadFile(f.name)
+                                                        .then((data: Buffer | null) => {
+                                                            if (!data) {
+                                                                reject2(
+                                                                    new MobilettoOrmError(
+                                                                        `findVersionsById(${id}): safeReadFile error, no data`
+                                                                    )
+                                                                );
+                                                            }
+                                                            if (!typeDef.hasRedactions()) {
+                                                                f.data = data || undefined;
+                                                            }
+                                                            f.object = data
+                                                                ? typeDef.redact(JSON.parse(data.toString("utf8")))
+                                                                : undefined;
+                                                            resolve2(f);
+                                                        })
+                                                        .catch((e2: Error) => {
+                                                            if (logger.isWarnEnabled()) {
+                                                                logger.warn(
+                                                                    `findVersionsById(${id}): safeReadFile error ${e2}`
+                                                                );
+                                                            }
+                                                            reject2(e2);
+                                                        });
+                                                })
+                                            );
+                                        });
+                                    Promise.all(dataPromises)
+                                        .then(() => {
+                                            found[storage.name] = files;
+                                            resolve();
+                                        })
+                                        .catch((e: Error) => {
+                                            reject(e);
+                                        });
                                 }
-                                files
-                                    .filter((f: MobilettoMetadata) => f.name && typeDef.isSpecificPath(f.name))
-                                    .sort((f1: MobilettoMetadata, f2: MobilettoMetadata) =>
-                                        f1.name.localeCompare(f2.name)
-                                    )
-                                    .map((f: MobilettoOrmMetadata) => {
-                                        dataPromises.push(
-                                            new Promise<MobilettoOrmMetadata>((resolve2, reject2) => {
-                                                storage
-                                                    .safeReadFile(f.name)
-                                                    .then((data: Buffer | null) => {
-                                                        if (!data) {
-                                                            reject2(
-                                                                new MobilettoOrmError(
-                                                                    `findVersionsById(${id}): safeReadFile error, no data`
-                                                                )
-                                                            );
-                                                        }
-                                                        if (!typeDef.hasRedactions()) {
-                                                            f.data = data || undefined;
-                                                        }
-                                                        f.object = data
-                                                            ? typeDef.redact(JSON.parse(data.toString("utf8")))
-                                                            : undefined;
-                                                        resolve2(f);
-                                                    })
-                                                    .catch((e2: Error) => {
-                                                        if (logger.isWarnEnabled()) {
-                                                            logger.warn(
-                                                                `findVersionsById(${id}): safeReadFile error ${e2}`
-                                                            );
-                                                        }
-                                                        reject2(e2);
-                                                    });
-                                            })
-                                        );
-                                    });
-                                Promise.all(dataPromises)
-                                    .then(() => {
-                                        found[storage.name] = files;
-                                        resolve();
-                                    })
-                                    .catch((e: Error) => {
-                                        reject(e);
-                                    });
                             })
                             .catch((e: Error) => {
                                 if (logger.isErrorEnabled()) {
@@ -597,10 +599,10 @@ const repo = (
             await Promise.all(storagePromises);
             return found;
         },
-        async findAll(opts?: MobilettoOrmFindOpts): Promise<MobilettoOrmPersistable[]> {
+        async findAll(opts?: MobilettoOrmFindOpts): Promise<MobilettoOrmObject[]> {
             return repository.find(() => true, opts);
         },
-        async findAllIncludingRemoved(): Promise<MobilettoOrmPersistable[]> {
+        async findAllIncludingRemoved(): Promise<MobilettoOrmObject[]> {
             return repository.find(() => true, { removed: true });
         },
     };

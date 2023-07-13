@@ -135,9 +135,9 @@ describe("indexes test", async () => {
     });
     it("should update the category of one thing", async () => {
         const update = Object.assign({}, test.newThings[0], { category: differentCategory });
-        test.updatedThing = await test.repo.update(update, test.newThings[0].version);
+        test.updatedThing = await test.repo.update(update, test.newThings[0]._meta.version);
         expect(test.updatedThing).to.not.be.null;
-        expect(test.updatedThing.ctime).eq(test.newThings[0].ctime);
+        expect(test.updatedThing._meta.ctime).eq(test.newThings[0]._meta.ctime);
         const norm = typeDefConfig.fields.category.normalize;
         expect(norm(test.updatedThing.category)).eq(norm(differentCategory));
     });
@@ -153,7 +153,7 @@ describe("indexes test", async () => {
         const found = await test.repo.findBy("category", differentCategory.toUpperCase());
         expect(found).to.not.be.null;
         expect(found.length).eq(1);
-        expect(found[0].ctime).eq(test.newThings[0].ctime);
+        expect(found[0]._meta.ctime).eq(test.newThings[0]._meta.ctime);
         expect(found[0].value).eq(test.newThings[0].value);
         expect(found[0].comments).eq(test.newThings[0].comments);
         const norm = typeDefConfig.fields.category.normalize;
@@ -179,9 +179,9 @@ describe("indexes test", async () => {
         for (let i = 0; i < NUM_THINGS; i++) {
             if (i > 0) {
                 // we already removed thing 0
-                expect(await test.repo.remove(test.newThings[i].id)).is.not.null;
+                expect(await test.repo.remove(test.newThings[i]._meta.id)).is.not.null;
             }
-            const purgeResult = await test.repo.purge(test.newThings[i].id);
+            const purgeResult = await test.repo.purge(test.newThings[i]._meta.id);
             expect(purgeResult).is.not.null;
             expect(purgeResult.length).eq(test.storages.length);
         }

@@ -15,16 +15,16 @@ describe("version management test", async () => {
     it("should create a new thing and update it many times", async () => {
         const now = Date.now();
         test.newThing = await test.repo.create({ id: thingID, value: rand(10) });
-        expect(test.newThing.ctime).greaterThanOrEqual(now, "ctime was too old");
-        expect(test.newThing.mtime).equals(
-            test.newThing.ctime,
+        expect(test.newThing._meta.ctime).greaterThanOrEqual(now, "ctime was too old");
+        expect(test.newThing._meta.mtime).equals(
+            test.newThing._meta.ctime,
             "mtime was different from ctime on newly created thing"
         );
         const maxVersions = test.repo.typeDef.maxVersions;
         let currentThing = test.newThing;
         for (let i = 0; i < maxVersions * 2; i++) {
             const update = Object.assign({}, currentThing, { value: rand(10) });
-            currentThing = await test.repo.update(update, currentThing.version);
+            currentThing = await test.repo.update(update, currentThing._meta.version);
         }
         test.updatedThing = currentThing;
     });

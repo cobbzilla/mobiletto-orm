@@ -52,8 +52,6 @@ describe("validation test", async () => {
     before((done) => initStorage(done, typeDefConfig));
     it("each field should have the correct implied types and controls", async () => {
         const fieldDefs = test.repo.typeDef.fields;
-        expect(fieldDefs["id"].type).eq("string");
-        expect(fieldDefs["id"].control).eq("text");
         expect(fieldDefs["value"].type).eq("string");
         expect(fieldDefs["value"].control).eq("text");
         expect(fieldDefs["int"].type).eq("number");
@@ -82,16 +80,13 @@ describe("validation test", async () => {
         expect(ti[5]).eq("defaultableField");
         expect(ti[6]).eq("restricted");
         expect(ti[7]).eq("multiselect");
-        expect(ti[8]).eq("id");
     });
     it("fails to create an object without any required fields", async () => {
         try {
             await test.repo.create({});
         } catch (e) {
             expect(e).instanceof(MobilettoOrmValidationError, "incorrect exception type");
-            expect(Object.keys(e.errors).length).equals(2, "expected two errors");
-            expect(e.errors["id"].length).equals(1, "expected 1 id error");
-            expect(e.errors["id"][0]).equals("required", "expected id.required error");
+            expect(Object.keys(e.errors).length).equals(1, "expected one error");
             expect(e.errors["value"].length).equals(1, "expected 1 value error");
             expect(e.errors["value"][0]).equals("required", "expected value.required error");
         }
@@ -101,9 +96,7 @@ describe("validation test", async () => {
             await test.repo.create({ id: "%" + rand(10) });
         } catch (e) {
             expect(e).instanceof(MobilettoOrmValidationError, "incorrect exception type");
-            expect(Object.keys(e.errors).length).equals(2, "expected 1 error");
-            expect(e.errors["id"].length).equals(1, "expected 1 id error");
-            expect(e.errors["id"][0]).equals("regex", "expected id.regex error");
+            expect(Object.keys(e.errors).length).equals(1, "expected 1 error");
             expect(e.errors["value"].length).equals(1, "expected 1 value error");
             expect(e.errors["value"][0]).equals("required", "expected value.required error");
         }
@@ -113,9 +106,7 @@ describe("validation test", async () => {
             await test.repo.create({ id: "~" + rand(10) });
         } catch (e) {
             expect(e).instanceof(MobilettoOrmValidationError, "incorrect exception type");
-            expect(Object.keys(e.errors).length).equals(2, "expected 1 error");
-            expect(e.errors["id"].length).equals(1, "expected 1 id error");
-            expect(e.errors["id"][0]).equals("regex", "expected id.regex error");
+            expect(Object.keys(e.errors).length).equals(1, "expected 1 error");
             expect(e.errors["value"].length).equals(1, "expected 1 value error");
             expect(e.errors["value"][0]).equals("required", "expected value.required error");
         }
@@ -195,9 +186,7 @@ describe("validation test", async () => {
             await test.repo.create({ value: rand(10), int: 100000, alphaOnly: "222" });
         } catch (e) {
             expect(e).instanceof(MobilettoOrmValidationError, "incorrect exception type");
-            expect(Object.keys(e.errors).length).equals(4, "expected 3 errors");
-            expect(e.errors["id"].length).equals(1, "expected 1 id error");
-            expect(e.errors["id"][0]).equals("required", "expected id.required error");
+            expect(Object.keys(e.errors).length).equals(3, "expected 3 errors");
             expect(e.errors["value"].length).equals(1, "expected 1 value error");
             expect(e.errors["value"][0]).equals("min", "expected value.min error");
             expect(e.errors["int"].length).equals(1, "expected 1 value error");
@@ -219,9 +208,7 @@ describe("validation test", async () => {
             });
         } catch (e) {
             expect(e).instanceof(MobilettoOrmValidationError, "incorrect exception type");
-            expect(Object.keys(e.errors).length).equals(7, "expected 7 errors");
-            expect(e.errors["id"].length).equals(1, "expected 1 id error");
-            expect(e.errors["id"][0]).equals("type", "expected id.type error");
+            expect(Object.keys(e.errors).length).equals(6, "expected 6 errors");
             expect(e.errors["value"].length).equals(1, "expected 1 value error");
             expect(e.errors["value"][0]).equals("type", "expected value.type error");
             expect(e.errors["int"].length).equals(1, "expected 1 value error");
@@ -257,7 +244,7 @@ describe("validation test", async () => {
         expect(test.newThing.multiselect[1]).eq("option-3");
     });
     it("successfully finds the object we created, and redacted fields are null", async () => {
-        const found = await test.repo.findById(test.newThing.id);
+        const found = await test.repo.findById(test.newThing._meta.id);
         expect(found.int).eq(100);
         expect(found.alphaOnly).is.null;
         expect(test.newThing.multiselect.length).eq(2);
@@ -265,7 +252,7 @@ describe("validation test", async () => {
         expect(test.newThing.multiselect[1]).eq("option-3");
     });
     it("successfully finds the object we created with {noRedact: true}, and redacted fields are not null", async () => {
-        const found = await test.repo.findById(test.newThing.id, { noRedact: true });
+        const found = await test.repo.findById(test.newThing._meta.id, { noRedact: true });
         expect(found.int).eq(100);
         expect(found.alphaOnly).eq(ALPHA_STRING);
         expect(test.newThing.multiselect.length).eq(2);
@@ -282,7 +269,7 @@ describe("validation test", async () => {
         expect(test.updatedThing.value).eq(test.newThing.value);
     });
     it("confirms that the updated object's non-updatable fields have not been updated", async () => {
-        const found = await test.repo.safeFindById(test.newThing.id);
+        const found = await test.repo.safeFindById(test.newThing._meta.id);
         expect(found).to.be.not.null;
         expect(found.version).eq(test.updatedThing.version);
         expect(found.int).eq(test.updatedThing.int);
@@ -291,7 +278,7 @@ describe("validation test", async () => {
     });
     it("successfully updates only the comments on the object", async () => {
         const newComments = rand(20);
-        const changes = { id: test.updatedThing.id, comments: newComments };
+        const changes = { id: test.updatedThing._meta.id, comments: newComments };
         test.updatedThing = await test.repo.update(changes, test.updatedThing);
         expect(test.newThing.int).eq(100);
         expect(test.updatedThing.comments).eq(newComments);

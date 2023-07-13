@@ -1,9 +1,9 @@
 /// <reference types="node" />
 import { MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
-import { MobilettoOrmIdArg, MobilettoOrmPersistable, MobilettoOrmTypeDef, MobilettoOrmTypeDefConfig } from "mobiletto-orm-typedef";
+import { MobilettoOrmIdArg, MobilettoOrmObject, MobilettoOrmTypeDef, MobilettoOrmTypeDefConfig } from "mobiletto-orm-typedef";
 export type MobilettoOrmStorageResolver = () => Promise<MobilettoConnection[]>;
-export type MobilettoOrmPredicate = (thing: MobilettoOrmPersistable) => boolean;
-export type MobilettoOrmCurrentArg = null | undefined | MobilettoOrmPersistable | string;
+export type MobilettoOrmPredicate = (thing: MobilettoOrmObject) => boolean;
+export type MobilettoOrmCurrentArg = null | undefined | MobilettoOrmObject | string;
 export type MobilettoOrmFindOpts = {
     first?: boolean;
     removed?: boolean;
@@ -11,35 +11,35 @@ export type MobilettoOrmFindOpts = {
     noRedact?: boolean;
     predicate?: MobilettoOrmPredicate;
 };
-export type MobilettoOrmPersistableInstance = {
+export type MobilettoOrmObjectInstance = {
     storage: MobilettoConnection;
-    object: MobilettoOrmPersistable;
+    object: MobilettoOrmObject;
     name: string;
     data?: Buffer;
 };
 export type MobilettoOrmMetadata = MobilettoMetadata & {
     data?: Buffer;
-    object?: MobilettoOrmPersistable;
+    object?: MobilettoOrmObject;
 };
 export type MobilettoOrmRepository = {
     typeDef: MobilettoOrmTypeDef;
-    id: (thing: MobilettoOrmPersistable) => string | null;
-    idField: (thing: MobilettoOrmPersistable) => string | null;
-    validate: (thing: MobilettoOrmPersistable, current?: MobilettoOrmPersistable) => Promise<MobilettoOrmPersistable>;
-    create: (thing: MobilettoOrmPersistable) => Promise<MobilettoOrmPersistable>;
-    update: (editedThing: MobilettoOrmPersistable, current: MobilettoOrmCurrentArg) => Promise<MobilettoOrmPersistable>;
-    remove: (id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg) => Promise<MobilettoOrmPersistable>;
+    id: (thing: MobilettoOrmObject) => string | null;
+    idField: (thing: MobilettoOrmObject) => string | null;
+    validate: (thing: MobilettoOrmObject, current?: MobilettoOrmObject) => Promise<MobilettoOrmObject>;
+    create: (thing: MobilettoOrmObject) => Promise<MobilettoOrmObject>;
+    update: (editedThing: MobilettoOrmObject, current: MobilettoOrmCurrentArg) => Promise<MobilettoOrmObject>;
+    remove: (id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg) => Promise<MobilettoOrmObject>;
     purge: (idVal: MobilettoOrmIdArg) => Promise<unknown>;
     exists: (id: MobilettoOrmIdArg) => Promise<boolean>;
-    resolveId: (idVal: MobilettoOrmIdArg) => string | MobilettoOrmIdArg;
-    findById: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmPersistable | boolean>;
-    safeFindById: (id: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmPersistable | boolean | null>;
-    find: (predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmPersistable[]>;
-    findBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmPersistable | MobilettoOrmPersistable[] | boolean | null>;
-    safeFindBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmPersistable | MobilettoOrmPersistable[] | boolean | null>;
+    resolveId: (idVal: MobilettoOrmIdArg, ctx?: string) => string | MobilettoOrmIdArg;
+    findById: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject | boolean>;
+    safeFindById: (id: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject | boolean | null>;
+    find: (predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject[]>;
+    findBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject | MobilettoOrmObject[] | boolean | null>;
+    safeFindBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject | MobilettoOrmObject[] | boolean | null>;
     findVersionsById: (id: MobilettoOrmIdArg) => Promise<Record<string, MobilettoOrmMetadata[]>>;
-    findAll: (opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmPersistable[]>;
-    findAllIncludingRemoved: () => Promise<MobilettoOrmPersistable[]>;
+    findAll: (opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject[]>;
+    findAllIncludingRemoved: () => Promise<MobilettoOrmObject[]>;
 };
 export type MobilettoOrmRepositoryFactory = {
     storages: MobilettoConnection[];
