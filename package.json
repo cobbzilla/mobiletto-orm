@@ -58,6 +58,6 @@
   },
   "dependencies": {
     "mobiletto-base": "^2.0.29",
-    "mobiletto-orm-typedef": "^2.1.7"
+    "mobiletto-orm-typedef": "^2.1.10"
   }
 }
