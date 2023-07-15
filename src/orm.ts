@@ -29,24 +29,24 @@ import {
     verifyWrite,
 } from "./util.js";
 
-const repo = (
+const repo = <T extends MobilettoOrmObject>(
     storages: MobilettoConnection[],
     typeDefOrConfig: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef
-): MobilettoOrmRepository => {
+): MobilettoOrmRepository<T> => {
     const typeDef: MobilettoOrmTypeDef =
         typeDefOrConfig instanceof MobilettoOrmTypeDef ? typeDefOrConfig : new MobilettoOrmTypeDef(typeDefOrConfig);
-    const repository: MobilettoOrmRepository = {
+    const repository: MobilettoOrmRepository<T> = {
         typeDef,
-        async validate(thing: MobilettoOrmObject, current?: MobilettoOrmObject): Promise<MobilettoOrmObject> {
-            return typeDef.validate(thing, current);
+        async validate(thing: T, current?: T): Promise<T> {
+            return typeDef.validate(thing, current) as Promise<T>;
         },
-        id(thing: MobilettoOrmObject): string | null {
+        id(thing: T): string | null {
             return typeDef.id(thing);
         },
-        idField(thing: MobilettoOrmObject) {
+        idField(thing: T) {
             return typeDef.idField(thing);
         },
-        async create(thing: MobilettoOrmObject): Promise<MobilettoOrmObject> {
+        async create(thing: T): Promise<T> {
             // validate fields
             const obj = await typeDef.validate(thing);
 
@@ -71,9 +71,9 @@ const repo = (
 
             // save thing, then read current version: is it what we just wrote? if not then error
             obj._meta = typeDef.newMeta(id);
-            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, obj));
+            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, obj)) as T;
         },
-        async update(editedThing: MobilettoOrmObject, current: MobilettoOrmCurrentArg): Promise<MobilettoOrmObject> {
+        async update(editedThing: T, current: MobilettoOrmCurrentArg): Promise<T> {
             const id = typeDef.id(editedThing);
             if (!id) {
                 throw new MobilettoOrmSyncError("undefined", "update: error determining id");
@@ -124,22 +124,22 @@ const repo = (
                 obj._meta.mtime = now;
             }
             const toWrite = Object.assign({}, found, obj);
-            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite));
+            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite)) as T;
         },
-        async remove(id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg): Promise<MobilettoOrmObject> {
+        async remove(id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg): Promise<T> {
             // is there a thing that matches current? if not, error
-            const found: MobilettoOrmObject = await findVersion(repository, id, current);
+            const found: T = (await findVersion<T>(repository, id, current)) as T;
 
             // write tombstone record, then read current version: is it what we just wrote? if not, error
             const tombstone = typeDef.tombstone(found);
             return typeDef.redact(
                 await verifyWrite(repository, storages, typeDef, typeDef.id(found), tombstone, found)
-            );
+            ) as T;
         },
         async purge(idVal: MobilettoOrmIdArg) {
             const id = this.resolveId(idVal, "purge");
             const found = await this.findById(id, { removed: true });
-            if (!typeDef.isTombstone(found as MobilettoOrmObject)) {
+            if (!typeDef.isTombstone(found as T)) {
                 throw new MobilettoOrmSyncError(idVal);
             }
             const objPath = typeDef.generalPath(id);
@@ -161,10 +161,7 @@ const repo = (
         async exists(id: MobilettoOrmIdArg): Promise<boolean> {
             return !!(await this.findById(id, { exists: true }));
         },
-        async safeFindById(
-            id: MobilettoOrmIdArg,
-            opts?: MobilettoOrmFindOpts
-        ): Promise<MobilettoOrmObject | boolean | null> {
+        async safeFindById(id: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts): Promise<T | boolean | null> {
             try {
                 return await this.findById(id, opts);
             } catch (e) {
@@ -178,7 +175,7 @@ const repo = (
             }
             return resolved;
         },
-        async findById(idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts): Promise<MobilettoOrmObject | boolean> {
+        async findById(idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts): Promise<T | boolean> {
             const id = this.resolveId(idVal, "findById");
 
             const objPath = typeDef.generalPath(id);
@@ -317,15 +314,15 @@ const repo = (
                     logger.warn(`findById: error resolving syncPromises: ${e}`);
                 }
             }
-            return noRedact ? newestObj : typeDef.redact(newestObj);
+            return (noRedact ? newestObj : typeDef.redact(newestObj)) as T;
         },
-        async find(predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts): Promise<MobilettoOrmObject[]> {
+        async find(predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts): Promise<T[]> {
             const typePath = typeDef.typePath();
             const removed = !!(opts && opts.removed && opts.removed === true);
             const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions();
 
             const promises: Promise<void>[] = [];
-            const found: Record<string, MobilettoOrmObject | null> = {};
+            const found: Record<string, T | null> = {};
 
             // read all things concurrently
             for (const storage of await resolveStorages(storages)) {
@@ -357,9 +354,9 @@ const repo = (
                                                         // does the thing match the predicate? if so, include in results
                                                         // removed things are only included if opts.removed was set
                                                         if (thing) {
-                                                            const obj = thing as MobilettoOrmObject;
+                                                            const obj = thing as T;
                                                             if (predicate(obj) && includeRemovedThing(removed, obj)) {
-                                                                found[id] = noRedact ? obj : typeDef.redact(obj);
+                                                                found[id] = (noRedact ? obj : typeDef.redact(obj)) as T;
                                                             }
                                                         }
                                                         resolve2();
@@ -401,7 +398,7 @@ const repo = (
                     logger.warn(`find: ${resolved} of ${promises.length} promises resolved`);
                 }
             }
-            return Object.values(found).filter((f) => f != null) as MobilettoOrmObject[];
+            return Object.values(found).filter((f) => f != null) as T[];
         },
         async safeFindBy(
             field: string,
@@ -409,7 +406,7 @@ const repo = (
             value: any,
             /* eslint-enable @typescript-eslint/no-explicit-any */
             opts?: MobilettoOrmFindOpts
-        ): Promise<MobilettoOrmObject | MobilettoOrmObject[] | boolean | null> {
+        ): Promise<T | T[] | boolean | null> {
             const first = (opts && typeof opts.first && opts.first === true) || false;
             try {
                 return await this.findBy(field, value, opts);
@@ -426,7 +423,7 @@ const repo = (
             value: any,
             /* eslint-enable @typescript-eslint/no-explicit-any */
             opts?: MobilettoOrmFindOpts
-        ): Promise<MobilettoOrmObject | MobilettoOrmObject[] | boolean | null> {
+        ): Promise<T | T[] | boolean | null> {
             const compValue =
                 typeDef.fields &&
                 typeDef.fields[field] &&
@@ -435,7 +432,7 @@ const repo = (
                     ? (typeDef.fields[field].normalize as MobilettoOrmNormalizeFunc)(value)
                     : value;
             if (typeDef.primary && field === typeDef.primary) {
-                return [(await this.findById(compValue, opts)) as MobilettoOrmObject];
+                return [(await this.findById(compValue, opts)) as T];
             }
             const idxPath: string = typeDef.indexPath(field, compValue);
             const removed = !!(opts && opts.removed && opts.removed);
@@ -447,7 +444,7 @@ const repo = (
 
             // read all things concurrently
             const storagePromises: Promise<string>[] = [];
-            const found: Record<string, MobilettoOrmObject | null> = {};
+            const found: Record<string, T | null> = {};
             const addedAnything: MobilettoFoundMarker = { found: false };
             for (const storage of await resolveStorages(storages)) {
                 const logPrefix = `[1] storage(${storage.name}):`;
@@ -513,9 +510,7 @@ const repo = (
             }
             const results = await Promise.all(storagePromises);
             logger.info(`findBy promise results = ${JSON.stringify(results)}`);
-            const foundValues: MobilettoOrmObject[] = Object.values(found).filter(
-                (v) => v != null
-            ) as MobilettoOrmObject[];
+            const foundValues: T[] = Object.values(found).filter((v) => v != null) as T[];
             if (exists) {
                 return foundValues.length > 0;
             }
@@ -599,10 +594,10 @@ const repo = (
             await Promise.all(storagePromises);
             return found;
         },
-        async findAll(opts?: MobilettoOrmFindOpts): Promise<MobilettoOrmObject[]> {
+        async findAll(opts?: MobilettoOrmFindOpts): Promise<T[]> {
             return repository.find(() => true, opts);
         },
-        async findAllIncludingRemoved(): Promise<MobilettoOrmObject[]> {
+        async findAllIncludingRemoved(): Promise<T[]> {
             return repository.find(() => true, { removed: true });
         },
     };

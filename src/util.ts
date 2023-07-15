@@ -35,12 +35,12 @@ export const parseCurrent = (current: MobilettoOrmCurrentArg) => {
     return version;
 };
 
-export const findVersion = async (
-    repository: MobilettoOrmRepository,
+export const findVersion = async <T extends MobilettoOrmObject>(
+    repository: MobilettoOrmRepository<T>,
     id: MobilettoOrmIdArg,
     current?: MobilettoOrmCurrentArg
-): Promise<MobilettoOrmObject> => {
-    const found = (await repository.findById(id)) as MobilettoOrmObject;
+): Promise<T> => {
+    const found = await repository.findById(id) as T;
     const foundVersion = found._meta?.version;
     const expectedVersion = current == null ? foundVersion : parseCurrent(current);
 
@@ -57,8 +57,8 @@ export const includeRemovedThing = (includeRemoved: boolean, thing: MobilettoOrm
     typeof thing._meta.removed === "undefined" ||
     (typeof thing._meta.removed === "boolean" && thing._meta.removed !== true);
 
-export const verifyWrite = async (
-    repository: MobilettoOrmRepository,
+export const verifyWrite = async <T extends MobilettoOrmObject>(
+    repository: MobilettoOrmRepository<T>,
     storages: MobilettoConnection[],
     typeDef: MobilettoOrmTypeDef,
     id: string,
@@ -199,8 +199,8 @@ export const verifyWrite = async (
 
 export type MobilettoFoundMarker = { found: boolean };
 
-export const promiseFindById = (
-    repository: MobilettoOrmRepository,
+export const promiseFindById = <T extends MobilettoOrmObject>(
+    repository: MobilettoOrmRepository<T>,
     storage: MobilettoConnection,
     field: string,
     /* eslint-disable @typescript-eslint/no-explicit-any */

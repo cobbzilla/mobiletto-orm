@@ -21,27 +21,27 @@ export type MobilettoOrmMetadata = MobilettoMetadata & {
     data?: Buffer;
     object?: MobilettoOrmObject;
 };
-export type MobilettoOrmRepository = {
+export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     typeDef: MobilettoOrmTypeDef;
-    id: (thing: MobilettoOrmObject) => string | null;
-    idField: (thing: MobilettoOrmObject) => string | null;
-    validate: (thing: MobilettoOrmObject, current?: MobilettoOrmObject) => Promise<MobilettoOrmObject>;
-    create: (thing: MobilettoOrmObject) => Promise<MobilettoOrmObject>;
-    update: (editedThing: MobilettoOrmObject, current: MobilettoOrmCurrentArg) => Promise<MobilettoOrmObject>;
-    remove: (id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg) => Promise<MobilettoOrmObject>;
+    id: (thing: T) => string | null;
+    idField: (thing: T) => string | null;
+    validate: (thing: T, current?: T) => Promise<T>;
+    create: (thing: T) => Promise<T>;
+    update: (editedThing: T, current: MobilettoOrmCurrentArg) => Promise<T>;
+    remove: (id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg) => Promise<T>;
     purge: (idVal: MobilettoOrmIdArg) => Promise<unknown>;
     exists: (id: MobilettoOrmIdArg) => Promise<boolean>;
     resolveId: (idVal: MobilettoOrmIdArg, ctx?: string) => string | MobilettoOrmIdArg;
-    findById: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject | boolean>;
-    safeFindById: (id: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject | boolean | null>;
-    find: (predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject[]>;
-    findBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject | MobilettoOrmObject[] | boolean | null>;
-    safeFindBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject | MobilettoOrmObject[] | boolean | null>;
+    findById: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T | boolean>;
+    safeFindById: (id: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T | boolean | null>;
+    find: (predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts) => Promise<T[]>;
+    findBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<T | T[] | boolean | null>;
+    safeFindBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<T | T[] | boolean | null>;
     findVersionsById: (id: MobilettoOrmIdArg) => Promise<Record<string, MobilettoOrmMetadata[]>>;
-    findAll: (opts?: MobilettoOrmFindOpts) => Promise<MobilettoOrmObject[]>;
-    findAllIncludingRemoved: () => Promise<MobilettoOrmObject[]>;
+    findAll: (opts?: MobilettoOrmFindOpts) => Promise<T[]>;
+    findAllIncludingRemoved: () => Promise<T[]>;
 };
 export type MobilettoOrmRepositoryFactory = {
     storages: MobilettoConnection[];
-    repository: (typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) => MobilettoOrmRepository;
+    repository: <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) => MobilettoOrmRepository<T>;
 };
