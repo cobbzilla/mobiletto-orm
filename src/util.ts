@@ -40,7 +40,7 @@ export const findVersion = async <T extends MobilettoOrmObject>(
     id: MobilettoOrmIdArg,
     current?: MobilettoOrmCurrentArg
 ): Promise<T> => {
-    const found = await repository.findById(id) as T;
+    const found = (await repository.findById(id)) as T;
     const foundVersion = found._meta?.version;
     const expectedVersion = current == null ? foundVersion : parseCurrent(current);
 

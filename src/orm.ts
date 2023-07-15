@@ -607,6 +607,7 @@ const repo = <T extends MobilettoOrmObject>(
 export const repositoryFactory = (storages: MobilettoConnection[]): MobilettoOrmRepositoryFactory => {
     return {
         storages,
-        repository: (typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) => repo(storages, typeDef),
+        repository: <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) =>
+            repo<T>(storages, typeDef),
     };
 };
