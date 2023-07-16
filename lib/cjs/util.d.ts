@@ -5,7 +5,7 @@ export declare const resolveStorages: (stores: MobilettoConnection[] | Mobiletto
 export declare const parseCurrent: (current: MobilettoOrmCurrentArg) => string;
 export declare const findVersion: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg) => Promise<T>;
 export declare const includeRemovedThing: (includeRemoved: boolean, thing: MobilettoOrmObject) => boolean;
-export declare const verifyWrite: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, storages: MobilettoConnection[], typeDef: MobilettoOrmTypeDef, id: string, obj: MobilettoOrmObject, removedObj?: MobilettoOrmObject) => Promise<MobilettoOrmObject>;
+export declare const verifyWrite: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, storages: MobilettoConnection[] | MobilettoOrmStorageResolver, typeDef: MobilettoOrmTypeDef, id: string, obj: MobilettoOrmObject, removedObj?: MobilettoOrmObject) => Promise<MobilettoOrmObject>;
 export type MobilettoFoundMarker = {
     found: boolean;
 };

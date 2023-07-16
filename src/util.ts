@@ -59,7 +59,7 @@ export const includeRemovedThing = (includeRemoved: boolean, thing: MobilettoOrm
 
 export const verifyWrite = async <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,
-    storages: MobilettoConnection[],
+    storages: MobilettoConnection[] | MobilettoOrmStorageResolver,
     typeDef: MobilettoOrmTypeDef,
     id: string,
     obj: MobilettoOrmObject,

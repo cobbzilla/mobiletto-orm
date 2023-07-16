@@ -1,5 +1,5 @@
 import path from "path";
-import { M_DIR, logger, MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
+import { M_DIR, logger, MobilettoConnection, MobilettoMetadata, MobilettoConnectionFunction } from "mobiletto-base";
 import {
     MobilettoOrmTypeDef,
     MobilettoOrmValidationError,
@@ -19,6 +19,7 @@ import {
     MobilettoOrmPredicate,
     MobilettoOrmRepository,
     MobilettoOrmRepositoryFactory,
+    MobilettoOrmStorageResolver,
 } from "./types.js";
 import {
     findVersion,
@@ -30,7 +31,7 @@ import {
 } from "./util.js";
 
 const repo = <T extends MobilettoOrmObject>(
-    storages: MobilettoConnection[],
+    storages: MobilettoConnection[] | MobilettoOrmStorageResolver,
     typeDefOrConfig: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef
 ): MobilettoOrmRepository<T> => {
     const typeDef: MobilettoOrmTypeDef =
@@ -604,7 +605,9 @@ const repo = <T extends MobilettoOrmObject>(
     return repository;
 };
 
-export const repositoryFactory = (storages: MobilettoConnection[]): MobilettoOrmRepositoryFactory => {
+export const repositoryFactory = (
+    storages: MobilettoConnection[] | MobilettoOrmStorageResolver
+): MobilettoOrmRepositoryFactory => {
     return {
         storages,
         repository: <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) =>

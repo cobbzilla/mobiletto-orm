@@ -42,6 +42,6 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     findAllIncludingRemoved: () => Promise<T[]>;
 };
 export type MobilettoOrmRepositoryFactory = {
-    storages: MobilettoConnection[];
+    storages: MobilettoConnection[] | MobilettoOrmStorageResolver;
     repository: <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) => MobilettoOrmRepository<T>;
 };

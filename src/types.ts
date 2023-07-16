@@ -66,7 +66,7 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
 };
 
 export type MobilettoOrmRepositoryFactory = {
-    storages: MobilettoConnection[];
+    storages: MobilettoConnection[] | MobilettoOrmStorageResolver;
     repository: <T extends MobilettoOrmObject>(
         typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef
     ) => MobilettoOrmRepository<T>;
