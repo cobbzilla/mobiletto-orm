@@ -11,6 +11,18 @@ export type MobilettoOrmFindOpts = {
     noRedact?: boolean;
     predicate?: MobilettoOrmPredicate;
 };
+export declare const FIND_FIRST: {
+    first: boolean;
+};
+export declare const FIND_REMOVED: {
+    removed: boolean;
+};
+export declare const FIND_EXISTS: {
+    exists: boolean;
+};
+export declare const FIND_NOREDACT: {
+    noRedact: boolean;
+};
 export type MobilettoOrmObjectInstance = {
     storage: MobilettoConnection;
     object: MobilettoOrmObject;
