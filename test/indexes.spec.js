@@ -37,8 +37,8 @@ describe("indexes test", async () => {
         expect(Array.isArray(found)).to.be.true;
         expect(found.length).eq(0);
     });
-    it("findBy(category, {exists: true}) returns false", async () => {
-        const exists = await test.repo.findBy("category", category, { exists: true });
+    it('existsWith("category", category) returns false', async () => {
+        const exists = await test.repo.existsWith("category", category);
         expect(exists).to.be.false;
     });
     it("findBy(category, {first: true}) returns null", async () => {
@@ -123,8 +123,8 @@ describe("indexes test", async () => {
             expect(found.filter((f) => JSON.stringify(f) === JSON.stringify(test.newThings[i])).length).eq(1);
         }
     });
-    it("findBy(category, {exists: true}) returns true", async () => {
-        const exists = await test.repo.findBy("category", category, { exists: true });
+    it('existsWith("category", category) returns true', async () => {
+        const exists = await test.repo.existsWith("category", category);
         expect(exists).to.be.true;
     });
     it("findBy(category, {first: true}) returns the first matching thing found", async () => {

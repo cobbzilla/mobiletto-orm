@@ -15,14 +15,12 @@ export type MobilettoOrmCurrentArg = null | undefined | MobilettoOrmObject | str
 export type MobilettoOrmFindOpts = {
     first?: boolean;
     removed?: boolean;
-    exists?: boolean;
     noRedact?: boolean;
     predicate?: MobilettoOrmPredicate;
 };
 
 export const FIND_FIRST = { first: true };
 export const FIND_REMOVED = { removed: true };
-export const FIND_EXISTS = { exists: true };
 export const FIND_NOREDACT = { noRedact: true };
 
 export type MobilettoOrmObjectInstance = {
@@ -48,23 +46,25 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     purge: (idVal: MobilettoOrmIdArg) => Promise<unknown>;
     exists: (id: MobilettoOrmIdArg) => Promise<boolean>;
     resolveId: (idVal: MobilettoOrmIdArg, ctx?: string) => string | MobilettoOrmIdArg;
-    findById: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T | boolean>;
-    safeFindById: (id: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T | boolean | null>;
+    findById: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T>;
+    safeFindById: (id: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T | null>;
     find: (predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts) => Promise<T[]>;
+    count: (predicate: MobilettoOrmPredicate) => Promise<number>;
     findBy: (
         field: string,
         /* eslint-disable @typescript-eslint/no-explicit-any */
         value: any,
         /* eslint-enable @typescript-eslint/no-explicit-any */
         opts?: MobilettoOrmFindOpts
-    ) => Promise<T | T[] | boolean | null>;
+    ) => Promise<T | T[] | null>;
     safeFindBy: (
         field: string,
         /* eslint-disable @typescript-eslint/no-explicit-any */
         value: any,
         /* eslint-enable @typescript-eslint/no-explicit-any */
         opts?: MobilettoOrmFindOpts
-    ) => Promise<T | T[] | boolean | null>;
+    ) => Promise<T | T[] | null>;
+    existsWith: (field: string, value: any) => Promise<boolean>;
     findVersionsById: (id: MobilettoOrmIdArg) => Promise<Record<string, MobilettoOrmMetadata[]>>;
     findAll: (opts?: MobilettoOrmFindOpts) => Promise<T[]>;
     findAllIncludingRemoved: () => Promise<T[]>;

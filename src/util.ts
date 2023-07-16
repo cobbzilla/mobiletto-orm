@@ -207,7 +207,6 @@ export const promiseFindById = <T extends MobilettoOrmObject>(
     value: any,
     /* eslint-enable @typescript-eslint/no-explicit-any */
     id: string,
-    exists: boolean,
     first: boolean,
     removed: boolean,
     noRedact: boolean,
@@ -224,7 +223,7 @@ export const promiseFindById = <T extends MobilettoOrmObject>(
                 const obj = thing as MobilettoOrmObject;
                 if (includeRemovedThing(removed, obj) && (predicate == null || predicate(obj))) {
                     found[id] = noRedact ? obj : typeDef.redact(obj);
-                    if (exists || first) {
+                    if (first) {
                         addedAnything.found = true;
                     }
                     resolve(`${logPrefix} resolving FOUND: ${JSON.stringify(obj)}`);
