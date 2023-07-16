@@ -64,6 +64,12 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
         /* eslint-enable @typescript-eslint/no-explicit-any */
         opts?: MobilettoOrmFindOpts
     ) => Promise<T | T[] | null>;
+    safeFindFirstBy: (
+        field: string,
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        value: any
+        /* eslint-enable @typescript-eslint/no-explicit-any */
+    ) => Promise<T | null>;
     existsWith: (field: string, value: any) => Promise<boolean>;
     findVersionsById: (id: MobilettoOrmIdArg) => Promise<Record<string, MobilettoOrmMetadata[]>>;
     findAll: (opts?: MobilettoOrmFindOpts) => Promise<T[]>;

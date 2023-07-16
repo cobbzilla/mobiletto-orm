@@ -12,6 +12,7 @@ import {
     MobilettoOrmNormalizeFunc,
 } from "mobiletto-orm-typedef";
 import {
+    FIND_FIRST,
     MobilettoOrmCurrentArg,
     MobilettoOrmFindOpts,
     MobilettoOrmMetadata,
@@ -509,6 +510,23 @@ const repo = <T extends MobilettoOrmObject>(
                     logger.warn(`safeFindBy(${field}) threw ${e}`);
                 }
                 return first ? null : [];
+            }
+        },
+        async safeFindFirstBy(
+            field: string,
+            /* eslint-disable @typescript-eslint/no-explicit-any */
+            value: any,
+            /* eslint-enable @typescript-eslint/no-explicit-any */
+            opts?: MobilettoOrmFindOpts
+        ): Promise<T | null> {
+            try {
+                const found = await this.safeFindBy(field, value, FIND_FIRST);
+                return found ? (found as T) : null;
+            } catch (e) {
+                if (logger.isWarnEnabled()) {
+                    logger.warn(`safeFindBy(${field}) threw ${e}`);
+                }
+                return null;
             }
         },
         async existsWith(field: string, value: any): Promise<boolean> {

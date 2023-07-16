@@ -46,6 +46,7 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     count: (predicate: MobilettoOrmPredicate) => Promise<number>;
     findBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<T | T[] | null>;
     safeFindBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<T | T[] | null>;
+    safeFindFirstBy: (field: string, value: any) => Promise<T | null>;
     existsWith: (field: string, value: any) => Promise<boolean>;
     findVersionsById: (id: MobilettoOrmIdArg) => Promise<Record<string, MobilettoOrmMetadata[]>>;
     findAll: (opts?: MobilettoOrmFindOpts) => Promise<T[]>;
