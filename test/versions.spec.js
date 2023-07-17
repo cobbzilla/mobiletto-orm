@@ -6,7 +6,12 @@ import { initStorage, test } from "./test-common.js";
 const thingID = "thing-" + rand(10);
 
 describe("version management test", async () => {
-    before((done) => initStorage(done, { typeName: `TestType_${rand(10)}` }));
+    before((done) =>
+        initStorage(done, {
+            typeName: `TestType_${rand(10)}`,
+            fields: { value: {} },
+        })
+    );
     it("findAll should return an empty array", async () => {
         const all = await test.repo.findAll();
         expect(all).to.not.be.null;
