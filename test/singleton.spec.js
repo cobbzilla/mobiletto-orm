@@ -1,6 +1,6 @@
 import { describe, before, it } from "mocha";
 import { assert, expect } from "chai";
-import { MobilettoOrmValidationError, rand } from "mobiletto-orm-typedef";
+import { MobilettoOrmNotFoundError, MobilettoOrmValidationError, rand } from "mobiletto-orm-typedef";
 import { initStorage, test } from "./test-common.js";
 
 const thingID = "SINGLETON_ID";
@@ -53,6 +53,27 @@ describe("singleton test", async () => {
             expect(e).instanceOf(MobilettoOrmValidationError);
             expect(e.errors.id.length).eq(1);
             expect(e.errors.id[0]).eq("exists");
+        }
+    });
+    it("findAll should return singleton thing in array", async () => {
+        const all = await test.repo.findAll();
+        expect(all).to.not.be.null;
+        expect(all.length).eq(1);
+        expect(test.repo.id(all[0])).eq(thingID);
+    });
+    it("should find singleton thing by id", async () => {
+        const found = await test.repo.findById(thingID);
+        expect(found).to.not.be.null;
+        expect(test.repo.id(found)).eq(thingID);
+    });
+    it("should throw MobilettoOrmNotFoundError when looking up another ID", async () => {
+        const nonexistentId = "should not find anything";
+        try {
+            const found = await test.repo.findById(nonexistentId);
+            assert.fail(`expected findById to throw MobilettoOrmNotFoundError but returned ${JSON.stringify(found)}`);
+        } catch (e) {
+            expect(e).instanceOf(MobilettoOrmNotFoundError);
+            expect(e.id).eq(nonexistentId);
         }
     });
 });
