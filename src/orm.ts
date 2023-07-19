@@ -617,6 +617,12 @@ const repo = <T extends MobilettoOrmObject>(
         async findAllIncludingRemoved(): Promise<T[]> {
             return repository.find(() => true, { removed: true });
         },
+        async findSingleton(): Promise<T> {
+            if (!typeDef.singleton) {
+                throw new MobilettoOrmError(`findSingleton: typeDef ${typeDef.typeName} is not a singleton type`);
+            }
+            return repository.findById(typeDef.singleton);
+        },
     };
     return repository;
 };

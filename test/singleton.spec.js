@@ -66,6 +66,11 @@ describe("singleton test", async () => {
         expect(found).to.not.be.null;
         expect(test.repo.id(found)).eq(thingID);
     });
+    it("should find singleton thing using findSingleton", async () => {
+        const found = await test.repo.findSingleton();
+        expect(found).to.not.be.null;
+        expect(test.repo.id(found)).eq(thingID);
+    });
     it("should throw MobilettoOrmNotFoundError when looking up another ID", async () => {
         const nonexistentId = "should not find anything";
         try {

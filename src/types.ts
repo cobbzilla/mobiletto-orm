@@ -74,6 +74,7 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     findVersionsById: (id: MobilettoOrmIdArg) => Promise<Record<string, MobilettoOrmMetadata[]>>;
     findAll: (opts?: MobilettoOrmFindOpts) => Promise<T[]>;
     findAllIncludingRemoved: () => Promise<T[]>;
+    findSingleton: () => Promise<T>;
 };
 
 export type MobilettoOrmRepositoryFactory = {
