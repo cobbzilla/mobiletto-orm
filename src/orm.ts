@@ -171,7 +171,8 @@ const repo = <T extends MobilettoOrmObject>(
             return (await this.safeFindById(id)) != null;
         },
         resolveId(id: MobilettoOrmIdArg, ctx?: string) {
-            const resolved = typeof id === "object" ? this.id(id) : typeof id === "string" && id.length > 0 ? id : null;
+            const resolved =
+                typeof id === "object" ? this.id(id as T) : typeof id === "string" && id.length > 0 ? id : null;
             if (!resolved) {
                 throw new MobilettoOrmError(`resolveId${ctx ? `[${ctx}]` : ""}: unresolvable id: ${id}`);
             }
