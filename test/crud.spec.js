@@ -108,6 +108,11 @@ describe("CRUD test", async () => {
         try {
             const update = Object.assign({}, test.newThing, { value: thingValue2 });
             test.updatedThing = await test.repo.update(update, rand(16));
+            assert.fail(
+                `expected repo.update to fail with MobilettoOrmSyncError, but returned: ${JSON.stringify(
+                    test.updatedThing
+                )}`
+            );
         } catch (e) {
             expect(e).instanceof(MobilettoOrmSyncError, "incorrect exception type");
         }

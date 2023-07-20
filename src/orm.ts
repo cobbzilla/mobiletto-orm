@@ -13,7 +13,7 @@ import {
 } from "mobiletto-orm-typedef";
 import {
     FIND_FIRST,
-    MobilettoOrmCurrentArg,
+    MobilettoOrmCurrentVersionArg,
     MobilettoOrmFindOpts,
     MobilettoOrmMetadata,
     MobilettoOrmObjectInstance,
@@ -75,7 +75,7 @@ const repo = <T extends MobilettoOrmObject>(
             obj._meta = typeDef.newMeta(id);
             return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, obj)) as T;
         },
-        async update(editedThing: T, current: MobilettoOrmCurrentArg): Promise<T> {
+        async update(editedThing: T, current: MobilettoOrmCurrentVersionArg): Promise<T> {
             const id = typeDef.id(editedThing);
             if (!id) {
                 throw new MobilettoOrmSyncError("undefined", "update: error determining id");
@@ -128,7 +128,7 @@ const repo = <T extends MobilettoOrmObject>(
             const toWrite = Object.assign({}, found, obj);
             return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite)) as T;
         },
-        async remove(id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg): Promise<T> {
+        async remove(id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentVersionArg): Promise<T> {
             // is there a thing that matches current? if not, error
             const found: T = (await findVersion<T>(repository, id, current)) as T;
 

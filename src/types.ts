@@ -10,7 +10,7 @@ export type MobilettoOrmStorageResolver = () => Promise<MobilettoConnection[]>;
 
 export type MobilettoOrmPredicate = (thing: MobilettoOrmObject) => boolean;
 
-export type MobilettoOrmCurrentArg = null | undefined | MobilettoOrmObject | string;
+export type MobilettoOrmCurrentVersionArg = MobilettoOrmIdArg | null | undefined;
 
 export type MobilettoOrmFindOpts = {
     first?: boolean;
@@ -41,8 +41,8 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     idField: (thing: T) => string | null;
     validate: (thing: T, current?: T) => Promise<T>;
     create: (thing: T) => Promise<T>;
-    update: (editedThing: T, current: MobilettoOrmCurrentArg) => Promise<T>;
-    remove: (id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentArg) => Promise<T>;
+    update: (editedThing: T, current: MobilettoOrmCurrentVersionArg) => Promise<T>;
+    remove: (id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentVersionArg) => Promise<T>;
     purge: (idVal: MobilettoOrmIdArg) => Promise<unknown>;
     exists: (id: MobilettoOrmIdArg) => Promise<boolean>;
     resolveId: (idVal: MobilettoOrmIdArg, ctx?: string) => string | MobilettoOrmIdArg;

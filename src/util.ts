@@ -7,7 +7,7 @@ import {
     MobilettoOrmTypeDef,
 } from "mobiletto-orm-typedef";
 import {
-    MobilettoOrmCurrentArg,
+    MobilettoOrmCurrentVersionArg,
     MobilettoOrmPredicate,
     MobilettoOrmRepository,
     MobilettoOrmStorageResolver,
@@ -21,7 +21,10 @@ export const resolveStorages = async (
     throw new MobilettoOrmError(`resolveStorages: stores was neither an array nor a function. stores=${stores}`);
 };
 
-export const parseCurrent = (current: MobilettoOrmCurrentArg) => {
+export const parseVersion = <T extends MobilettoOrmObject>(
+    repository: MobilettoOrmRepository<T>,
+    current: MobilettoOrmCurrentVersionArg
+) => {
     if (typeof current === "undefined" || current == null) {
         throw new MobilettoOrmError("no current version provided");
     }
@@ -29,20 +32,36 @@ export const parseCurrent = (current: MobilettoOrmCurrentArg) => {
     if (typeof current === "object" && current._meta && typeof current._meta.version === "string") {
         version = current._meta.version;
     }
-    if (typeof version !== "string") {
-        throw new MobilettoOrmError(`expected current version as string (was ${typeof version})`);
+    if (typeof version !== "string" || !repository.typeDef.isVersion(version)) {
+        throw new MobilettoOrmError(
+            `parseVersion: expected current version as string (was ${typeof version}: ${version})`
+        );
     }
     return version;
+};
+
+export const safeParseVersion = <T extends MobilettoOrmObject>(
+    repository: MobilettoOrmRepository<T>,
+    current: MobilettoOrmCurrentVersionArg,
+    defaultValue: string
+): string => {
+    try {
+        return parseVersion(repository, current);
+    } catch (e) {
+        return defaultValue;
+    }
 };
 
 export const findVersion = async <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,
     id: MobilettoOrmIdArg,
-    current?: MobilettoOrmCurrentArg
+    current?: MobilettoOrmCurrentVersionArg
 ): Promise<T> => {
     const found = (await repository.findById(id)) as T;
     const foundVersion = found._meta?.version;
-    const expectedVersion = current == null ? foundVersion : parseCurrent(current);
+    const expectedVersion = current
+        ? safeParseVersion(repository, current, `'error: no version detected in ${current}'`)
+        : safeParseVersion(repository, id, foundVersion || `'error: no version detected in ${id}'`);
 
     // is the current version what we expected? if not, error
     if (foundVersion !== expectedVersion) {
