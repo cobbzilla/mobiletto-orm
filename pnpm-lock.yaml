@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   mobiletto-base:
-    specifier: ^2.0.29
-    version: 2.0.29
+    specifier: ^2.0.30
+    version: 2.0.30
   mobiletto-orm-typedef:
     specifier: ^2.1.29
     version: 2.1.29
@@ -482,8 +482,8 @@ packages:
       ieee754: 1.2.1
     dev: true
 
-  /bullmq@4.2.1:
-    resolution: {integrity: sha512-Ye+CbzvdJytHSbA+zhjbxanW1Vh4+CdHS4Y0lfZ4ATCkBT+6xEmCNSca4/tW+SrrgYxwpKpTNeSy4+D1Nwc+fA==}
+  /bullmq@4.6.0:
+    resolution: {integrity: sha512-RVJSC/DhruJpSoIWYS69NMZ+qTVZpWF4fZ9WKxP9QqY7WHK6Hbm+S5D7W4XN1HAExIGHTmWYZMiqKnBgxEi9XA==}
     dependencies:
       cron-parser: 4.8.1
       glob: 8.1.0
@@ -1247,10 +1247,10 @@ packages:
       brace-expansion: 2.0.1
     dev: false
 
-  /mobiletto-base@2.0.29:
-    resolution: {integrity: sha512-RFMA3k1pmbC2/cYaLjk2FKXnE/aUX3qvn/IzqSJn7o0dePkmTcxIHQbL/3KlfktopZl3iNf44XjAbNlPyf3iag==}
+  /mobiletto-base@2.0.30:
+    resolution: {integrity: sha512-udD/+MI5nyaXqwqVf8KBlZqdUTu1LIlDWSqDX8N6anHjM5jVDDKQ/PRrAJKTDbVs/aJlZ/VoCPMda/tmbp/Lvg==}
     dependencies:
-      bullmq: 4.2.1
+      bullmq: 4.6.0
       ioredis: 5.3.2
       lru-cache: 10.0.0
       mobiletto-common: 2.0.15

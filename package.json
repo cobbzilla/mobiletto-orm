@@ -1,6 +1,6 @@
 {
   "name": "mobiletto-orm",
-  "version": "2.1.24",
+  "version": "2.1.25",
   "type": "module",
   "description": "mobiletto object-relational-mapper (ORM)",
   "keywords": [
@@ -57,7 +57,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "mobiletto-base": "^2.0.29",
+    "mobiletto-base": "^2.0.30",
     "mobiletto-orm-typedef": "^2.1.29"
   }
 }
