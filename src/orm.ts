@@ -400,15 +400,24 @@ const repo = <T extends MobilettoOrmObject>(
                 typeof typeDef.fields[field].normalize === "function"
                     ? (typeDef.fields[field].normalize as MobilettoOrmNormalizeFunc)(value)
                     : value;
-            if (typeDef.primary && field === typeDef.primary) {
-                return [(await this.findById(compValue, opts)) as T];
-            }
             const idxPath: string = typeDef.indexPath(field, compValue);
+            const first = !!(opts && typeof opts.first === "boolean" && opts.first);
             const removed = !!(opts && opts.removed && opts.removed);
             const noRedact = !!(opts && opts.noRedact && opts.noRedact) || !typeDef.hasRedactions();
-            const first = !!(opts && typeof opts.first === "boolean" && opts.first);
             const predicate: MobilettoOrmPredicate | null =
                 opts && typeof opts.predicate === "function" ? opts.predicate : null;
+
+            if (typeDef.primary && field === typeDef.primary) {
+                const foundById = (await this.findById(compValue, opts)) as T;
+                if (!removed && typeDef.isTombstone(foundById)) {
+                    return first ? null : [];
+                }
+                if (predicate && !predicate(foundById)) {
+                    return first ? null : [];
+                }
+                const maybeRedacted: T = noRedact ? foundById : (typeDef.redact(foundById) as T);
+                return first ? maybeRedacted : [maybeRedacted];
+            }
 
             // read all things concurrently
             const storagePromises: Promise<string>[] = [];
