@@ -20,6 +20,8 @@ import {
     MobilettoOrmMetadata,
     MobilettoOrmObjectInstance,
     MobilettoOrmPredicate,
+    MobilettoOrmPurgeResult,
+    MobilettoOrmPurgeResults,
     MobilettoOrmRepository,
     MobilettoOrmRepositoryFactory,
     MobilettoOrmStorageResolver,
@@ -121,7 +123,7 @@ const repo = <T extends MobilettoOrmObject>(
                 await verifyWrite(repository, storages, typeDef, typeDef.id(found), tombstone, found)
             ) as T;
         },
-        async purge(idVal: MobilettoOrmIdArg) {
+        async purge(idVal: MobilettoOrmIdArg): Promise<MobilettoOrmPurgeResults> {
             const id = this.resolveId(idVal, "purge");
             const found = await this.findById(id, { removed: true });
             if (!typeDef.isTombstone(found as T)) {
@@ -131,10 +133,10 @@ const repo = <T extends MobilettoOrmObject>(
             const deletePromises = [];
             for (const storage of await resolveStorages(storages)) {
                 deletePromises.push(
-                    new Promise((resolve, reject) => {
+                    new Promise<MobilettoOrmPurgeResult>((resolve, reject) => {
                         storage
                             .remove(objPath, { recursive: true })
-                            .then((result: string | string[]) => resolve(result))
+                            .then((result: MobilettoOrmPurgeResult) => resolve(result))
                             .catch((e: Error) => {
                                 reject(e);
                             });
