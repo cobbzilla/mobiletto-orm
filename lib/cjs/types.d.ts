@@ -28,6 +28,8 @@ export type MobilettoOrmMetadata = MobilettoMetadata & {
     data?: Buffer;
     object?: MobilettoOrmObject;
 };
+export type MobilettoOrmPurgeResult = string | string[];
+export type MobilettoOrmPurgeResults = MobilettoOrmPurgeResult[];
 export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     typeDef: MobilettoOrmTypeDef;
     id: (thing: T) => string | null;
@@ -36,7 +38,7 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     create: (thing: T) => Promise<T>;
     update: (editedThing: T) => Promise<T>;
     remove: (thing: MobilettoOrmIdArg) => Promise<T>;
-    purge: (idVal: MobilettoOrmIdArg) => Promise<unknown>;
+    purge: (idVal: MobilettoOrmIdArg) => Promise<MobilettoOrmPurgeResults>;
     exists: (id: MobilettoOrmIdArg) => Promise<boolean>;
     resolveId: (idVal: MobilettoOrmIdArg, ctx?: string) => string;
     findById: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T>;
