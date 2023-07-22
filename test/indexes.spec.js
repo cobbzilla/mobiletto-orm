@@ -1,14 +1,14 @@
 import { describe, before, it } from "mocha";
 import { expect, assert } from "chai";
 import { initStorage, test } from "./test-common.js";
-import { MobilettoOrmError, rand } from "mobiletto-orm-typedef";
+import { MobilettoOrmError, MobilettoOrmSyncError, MobilettoOrmValidationError, rand } from "mobiletto-orm-typedef";
 import { M_DIR } from "mobiletto-base";
 
 const typeDefConfig = {
     typeName: `TestType_foo`,
     fields: {
         value: {
-            index: true,
+            unique: true,
         },
         category: {
             index: true,
@@ -93,6 +93,20 @@ describe("indexes test", async () => {
                     comments: i === LAST_THING_INDEX ? lastComments : `some-comment-${rand(3)}`,
                 })
             );
+        }
+    });
+    it("fails to create a thing that violates a unique index", async () => {
+        try {
+            await test.repo.create({
+                id: `TestObj_conflict_${rand(2)}`,
+                value: test.newThings[0].value,
+                category,
+                comments: "some other comments",
+            });
+        } catch (e) {
+            expect(e).instanceof(MobilettoOrmValidationError);
+            expect(e.errors?.value).is.not.undefined;
+            expect(e.errors?.value[0]).eq("exists");
         }
     });
     it("findBy(value) returns each thing", async () => {
