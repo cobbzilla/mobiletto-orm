@@ -10,6 +10,9 @@ import {
     MobilettoOrmIdArg,
     MobilettoOrmError,
     MobilettoOrmNormalizeFunc,
+    ValidationErrors,
+    addError,
+    hasErrors,
 } from "mobiletto-orm-typedef";
 import {
     FIND_FIRST,
@@ -28,6 +31,7 @@ import {
     MobilettoFoundMarker,
     promiseFindById,
     resolveStorages,
+    validateIndexes,
     verifyWrite,
 } from "./util.js";
 
@@ -50,28 +54,20 @@ const repo = <T extends MobilettoOrmObject>(
         },
         async create(thing: T): Promise<T> {
             // validate fields
-            const obj = await typeDef.validate(thing);
+            const obj: T = (await typeDef.validate(thing)) as T;
 
             // does thing with PK exist? if so, error
             const id = typeDef.id(obj);
             if (!id) {
                 throw new MobilettoOrmNotFoundError(typeof obj !== "undefined" ? JSON.stringify(obj) : "undefined");
             }
-            let found = null;
-            try {
-                found = await repository.findById(id);
-            } catch (e) {
-                if (e instanceof MobilettoOrmNotFoundError) {
-                    // expected
-                } else {
-                    throw e;
-                }
-            }
+            const errors: ValidationErrors = {};
+            const found = await repository.safeFindById(id);
             if (found != null) {
-                throw new MobilettoOrmValidationError({ id: ["exists"] });
+                addError(errors, "id", "exists");
             }
+            await validateIndexes<T>(this, obj, errors);
 
-            // save thing, then read current version: is it what we just wrote? if not then error
             obj._meta = typeDef.newMeta(id);
             return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, obj)) as T;
         },
@@ -91,33 +87,14 @@ const repo = <T extends MobilettoOrmObject>(
             }
 
             // validate fields
-            const obj = await typeDef.validate(editedThing, found);
+            const obj: T = (await typeDef.validate(editedThing, found)) as T;
             if (!obj._meta) {
                 throw new MobilettoOrmError("update: validate returned object without _meta");
             }
+            await validateIndexes<T>(this, obj, {});
 
-            if (
-                typeof obj._meta.version === "undefined" ||
-                !obj._meta.version ||
-                found._meta.version === obj._meta.version
-            ) {
-                obj._meta.version = typeDef.newVersion();
-            }
+            obj._meta.version = typeDef.newVersion();
 
-            // remove old indexes
-            const indexCleanups = [];
-            for (const fieldName of Object.keys(typeDef.fields)) {
-                const field = typeDef.fields[fieldName];
-                if (!!field.index && typeof found[fieldName] !== "undefined") {
-                    const idxPath = typeDef.indexSpecificPath(fieldName, found);
-                    for (const storage of await resolveStorages(storages)) {
-                        indexCleanups.push(storage.remove(idxPath));
-                    }
-                }
-            }
-            await Promise.all(indexCleanups);
-
-            // update thing, then read current version: is it what we just wrote? if not, error
             const now = Date.now();
             if (typeof obj._meta.ctime !== "number" || obj._meta.ctime < 0) {
                 obj._meta.ctime = now;
@@ -126,7 +103,7 @@ const repo = <T extends MobilettoOrmObject>(
                 obj._meta.mtime = now;
             }
             const toWrite = Object.assign({}, found, obj);
-            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite)) as T;
+            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite, found)) as T;
         },
         async remove(id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentVersionArg): Promise<T> {
             // is there a thing that matches current? if not, error

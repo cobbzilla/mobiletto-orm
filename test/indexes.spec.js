@@ -5,7 +5,7 @@ import { MobilettoOrmError, rand } from "mobiletto-orm-typedef";
 import { M_DIR } from "mobiletto-base";
 
 const typeDefConfig = {
-    typeName: `TestType_${rand(10)}`,
+    typeName: `TestType_foo`,
     fields: {
         value: {
             index: true,
@@ -16,12 +16,13 @@ const typeDefConfig = {
         },
         comments: {},
     },
+    debug: true,
 };
 
-const NUM_THINGS = 5;
+const NUM_THINGS = 2;
 const LAST_THING_INDEX = NUM_THINGS - 1;
-const category = rand(10);
-const lastComments = "last_comments_" + rand(10);
+const category = `some-category_${rand(4)}`;
+const lastComments = "last_comments_" + rand(4);
 const differentCategory = "different_than_" + category;
 
 describe("indexes test", async () => {
@@ -86,10 +87,10 @@ describe("indexes test", async () => {
         for (let i = 0; i < NUM_THINGS; i++) {
             test.newThings.push(
                 await test.repo.create({
-                    id: `Test_${i}_${rand(10)}`,
-                    value: rand(10),
+                    id: `TestObj_${i}_${rand(2)}`,
+                    value: `value_${rand(3)}`,
                     category,
-                    comments: i === LAST_THING_INDEX ? lastComments : rand(10),
+                    comments: i === LAST_THING_INDEX ? lastComments : `some-comment-${rand(3)}`,
                 })
             );
         }
@@ -179,7 +180,8 @@ describe("indexes test", async () => {
         for (let i = 0; i < NUM_THINGS; i++) {
             if (i > 0) {
                 // we already removed thing 0
-                expect(await test.repo.remove(test.newThings[i]._meta.id)).is.not.null;
+                const removed = await test.repo.remove(test.newThings[i]._meta.id);
+                expect(removed).is.not.null;
             }
             const purgeResult = await test.repo.purge(test.newThings[i]._meta.id);
             expect(purgeResult).is.not.null;

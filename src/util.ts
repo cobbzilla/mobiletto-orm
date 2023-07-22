@@ -1,10 +1,14 @@
 import { logger, MobilettoConnection } from "mobiletto-base";
 import {
+    addError,
+    hasErrors,
     MobilettoOrmError,
     MobilettoOrmIdArg,
     MobilettoOrmObject,
     MobilettoOrmSyncError,
     MobilettoOrmTypeDef,
+    MobilettoOrmValidationError,
+    ValidationErrors,
 } from "mobiletto-orm-typedef";
 import {
     MobilettoOrmCurrentVersionArg,
@@ -82,7 +86,7 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
     typeDef: MobilettoOrmTypeDef,
     id: string,
     obj: MobilettoOrmObject,
-    removedObj?: MobilettoOrmObject
+    previous?: MobilettoOrmObject
 ) => {
     const writePromises: Promise<number | string | string[] | Error>[] = [];
     const writeSuccesses: boolean[] = [];
@@ -113,13 +117,18 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                     });
             })
         );
-        // if remove is null, write index values, if they don't already exist
-        // if remove is non-null, remove index values
-        for (const fieldName of typeDef.indexes) {
-            const idxPath = typeDef.indexSpecificPath(fieldName, (removedObj ? removedObj : obj) as MobilettoOrmObject);
-            let indexPromise;
-            if (removedObj) {
-                indexPromise = new Promise<string | string[] | Error>((resolve) => {
+        for (const idx of typeDef.indexes) {
+            const fieldName = idx.field;
+            // Remove existing indexes when either is true:
+            // 1. previous object exists and has a value for field:
+            // 2. the new object is a tombstone (removed)
+            if (
+                previous &&
+                (typeDef.isTombstone(obj) ||
+                    (typeof previous[fieldName] !== "undefined" && previous[fieldName] != null))
+            ) {
+                const idxPath = typeDef.indexSpecificPath(fieldName, previous);
+                const indexPromise = new Promise<string | string[] | Error>((resolve) => {
                     storage
                         .remove(idxPath)
                         .then((result: string | string[]) => resolve(result))
@@ -132,8 +141,14 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                             resolve(e);
                         });
                 });
-            } else {
-                indexPromise = new Promise<string | Error>((resolve) => {
+                writePromises.push(indexPromise);
+            }
+            // Create new indexes if:
+            // 1. not a removal AND
+            // 2. obj has value for field
+            if (!typeDef.isTombstone(obj) && typeof obj[fieldName] !== "undefined" && obj[fieldName] != null) {
+                const idxPath = typeDef.indexSpecificPath(fieldName, obj);
+                const indexPromise = new Promise<string | Error>((resolve) => {
                     storage.safeMetadata(idxPath).then(() => {
                         storage
                             .writeFile(idxPath, "")
@@ -150,8 +165,8 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                             });
                     });
                 });
+                writePromises.push(indexPromise);
             }
-            writePromises.push(indexPromise);
         }
     }
     const writeResults = await Promise.all(writePromises);
@@ -257,4 +272,28 @@ export const promiseFindById = <T extends MobilettoOrmObject>(
                 resolve(`${logPrefix} resolving as error: ${e2}`);
             });
     });
+};
+
+export const validateIndexes = async <T extends MobilettoOrmObject>(
+    repository: MobilettoOrmRepository<T>,
+    thing: T,
+    errors: ValidationErrors
+): Promise<void> => {
+    for (const idx of repository.typeDef.indexes.filter((i) => i.unique)) {
+        if (typeof thing[idx.field] === "undefined" || thing[idx.field] == null) {
+            addError(errors, idx.field, "required");
+        } else {
+            const found = await repository.safeFindFirstBy(idx.field, thing[idx.field]);
+            if (found != null) {
+                if (thing?._meta?.id && found._meta?.id && thing?._meta?.id === found._meta?.id) {
+                    // this is an update, we found ourselves: it's OK
+                } else {
+                    addError(errors, idx.field, "exists");
+                }
+            }
+        }
+    }
+    if (hasErrors(errors)) {
+        throw new MobilettoOrmValidationError(errors);
+    }
 };
