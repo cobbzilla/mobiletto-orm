@@ -1,6 +1,6 @@
 {
   "name": "mobiletto-orm",
-  "version": "2.1.31",
+  "version": "2.1.32",
   "type": "module",
   "description": "mobiletto object-relational-mapper (ORM)",
   "keywords": [
@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cobbzilla/mobiletto-orm"
+    "url": "https://github.com/cobbzilla/mobiletto-orm.git"
   },
   "license": "Apache-2.0",
   "scripts": {
@@ -49,8 +49,8 @@
     "eslint": "^8.44.0",
     "eslint-config-prettier": "^8.8.0",
     "fake-indexeddb": "^4.0.1",
-    "mobiletto-driver-indexeddb": "^2.0.9",
-    "mobiletto-driver-local": "^2.0.5",
+    "mobiletto-driver-indexeddb": "^2.0.14",
+    "mobiletto-driver-local": "^2.0.7",
     "mocha": "^10.2.0",
     "prettier": "^2.8.8",
     "tslint-config-prettier": "^1.18.0",

@@ -44,11 +44,11 @@ devDependencies:
     specifier: ^4.0.1
     version: 4.0.1
   mobiletto-driver-indexeddb:
-    specifier: ^2.0.9
-    version: 2.0.9
+    specifier: ^2.0.14
+    version: 2.0.14
   mobiletto-driver-local:
-    specifier: ^2.0.5
-    version: 2.0.5
+    specifier: ^2.0.7
+    version: 2.0.7
   mocha:
     specifier: ^10.2.0
     version: 10.2.0
@@ -1267,14 +1267,14 @@ packages:
       winston: 3.10.0
     dev: false
 
-  /mobiletto-driver-indexeddb@2.0.9:
-    resolution: {integrity: sha512-vIzbZ3Db2JDwks6DsShvImM/KJt9/GZbbbCqI7JuobTOsVXHEtlNEeb5qInnNBmRmX3abFB6ZFXNS0OUj1MaQQ==}
+  /mobiletto-driver-indexeddb@2.0.14:
+    resolution: {integrity: sha512-OyWMAFGuLXR/dRFX2U7MK5d/e6qy+N+WfYLjsZG9VGfBYwYVWW0tGMnCqU/ESvVeIXEtQu9X3hyaMPB5t4zrsA==}
     dependencies:
       buffer: 6.0.3
     dev: true
 
-  /mobiletto-driver-local@2.0.5:
-    resolution: {integrity: sha512-vEshUsU4L51BKUwBdt+xHYYn5Uz7vSD0KuTl4YEZenGsUBQCge5HM1c/RMCV3LggN9wRSDweUWzryM3r75N+tQ==}
+  /mobiletto-driver-local@2.0.7:
+    resolution: {integrity: sha512-3Mw0R426CrNWLUzv0N8af0usZ5hOibZRXJE00uYTrIkX8877IAEUO+Hjm3ysZffDYm7EMkj1GqhLjXYISZd52A==}
     dev: true
 
   /mobiletto-orm-typedef@2.1.34:
