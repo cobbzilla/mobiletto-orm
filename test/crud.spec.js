@@ -1,6 +1,7 @@
 import { describe, before, it } from "mocha";
 import { expect, assert } from "chai";
 import {
+    MobilettoOrmError,
     MobilettoOrmNotFoundError,
     MobilettoOrmSyncError,
     MobilettoOrmValidationError,
@@ -9,8 +10,8 @@ import {
 import { initStorage, test } from "./test-common.js";
 
 const thingID = "thing-" + rand(10);
-const thingValue1 = "thingValue1-" + rand(10);
-const thingValue2 = "thingValue2-" + rand(10);
+const thingValue1 = "thingValue1-" + rand(3);
+const thingValue2 = "thingValue2-" + rand(3);
 
 const typeDefConfig = {
     typeName: `TestType_${rand(10)}`,
@@ -99,15 +100,18 @@ describe("CRUD test", async () => {
     it("should fail to update the thing when not passing a current version", async () => {
         try {
             const update = Object.assign({}, test.newThing, { value: thingValue2 });
+            update._meta = { id: test.newThing._meta.id };
             test.updatedThing = await test.repo.update(update);
         } catch (e) {
-            expect(e).instanceof(MobilettoOrmSyncError, "incorrect exception type");
+            expect(e).instanceof(MobilettoOrmError, "incorrect exception type");
         }
     });
     it("should fail to update the thing when passing an incorrect current version", async () => {
         try {
+            const newVersion = test.repo.typeDef.newVersion();
             const update = Object.assign({}, test.newThing, { value: thingValue2 });
-            test.updatedThing = await test.repo.update(update, rand(16));
+            update._meta = Object.assign({}, test.newThing._meta, { version: newVersion });
+            test.updatedThing = await test.repo.update(update);
             assert.fail(
                 `expected repo.update to fail with MobilettoOrmSyncError, but returned: ${JSON.stringify(
                     test.updatedThing
@@ -119,7 +123,7 @@ describe("CRUD test", async () => {
     });
     it("should update the thing we just created", async () => {
         const update = Object.assign({}, test.newThing, { value: thingValue2 });
-        test.updatedThing = await test.repo.update(update, test.newThing._meta.version);
+        test.updatedThing = await test.repo.update(update);
         expect(test.updatedThing).to.not.be.null;
         expect(test.updatedThing._meta.ctime).eq(test.newThing._meta.ctime);
         expect(test.updatedThing.value).eq(thingValue2);
@@ -179,7 +183,7 @@ describe("CRUD test", async () => {
     });
     it("should fail to remove a thing when passing an out-of-date version", async () => {
         try {
-            const removed = await test.repo.remove(test.updatedThing._meta.id, test.newThing._meta.version);
+            const removed = await test.repo.remove(test.newThing);
             assert.fail(
                 `expected test.repo.remove to throw MobilettoOrmSyncError for obsolete version, but it returned ${JSON.stringify(
                     removed

@@ -16,7 +16,6 @@ import {
 } from "mobiletto-orm-typedef";
 import {
     FIND_FIRST,
-    MobilettoOrmCurrentVersionArg,
     MobilettoOrmFindOpts,
     MobilettoOrmMetadata,
     MobilettoOrmObjectInstance,
@@ -71,17 +70,17 @@ const repo = <T extends MobilettoOrmObject>(
             obj._meta = typeDef.newMeta(id);
             return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, obj)) as T;
         },
-        async update(editedThing: T, current: MobilettoOrmCurrentVersionArg): Promise<T> {
+        async update(editedThing: T): Promise<T> {
             const id = typeDef.id(editedThing);
             if (!id) {
                 throw new MobilettoOrmSyncError("undefined", "update: error determining id");
             }
-            if (typeof current === "undefined" || current == null) {
-                throw new MobilettoOrmSyncError(id, "update: current version is required");
+            if (!editedThing?._meta?.version) {
+                throw new MobilettoOrmError("update: _meta.version is required");
             }
 
             // does thing with PK exist? if not, error
-            const found = await findVersion(repository, id, current);
+            const found = await findVersion(repository, id, editedThing?._meta?.version);
             if (!found._meta) {
                 throw new MobilettoOrmError("update: findVersion returned object without _meta");
             }
@@ -105,11 +104,18 @@ const repo = <T extends MobilettoOrmObject>(
             const toWrite = Object.assign({}, found, obj);
             return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite, found)) as T;
         },
-        async remove(id: MobilettoOrmIdArg, current?: MobilettoOrmCurrentVersionArg): Promise<T> {
-            // is there a thing that matches current? if not, error
-            const found: T = (await findVersion<T>(repository, id, current)) as T;
+        async remove(thingToRemove: MobilettoOrmIdArg): Promise<T> {
+            if (typeof thingToRemove === "string" || !thingToRemove?._meta?.version) {
+                thingToRemove = await this.findById(thingToRemove);
+            }
 
-            // write tombstone record, then read current version: is it what we just wrote? if not, error
+            // is there a thing that matches current? if not, error
+            const found: T = (await findVersion<T>(
+                repository,
+                typeDef.id(thingToRemove),
+                thingToRemove._meta?.version
+            )) as T;
+
             const tombstone = typeDef.tombstone(found);
             return typeDef.redact(
                 await verifyWrite(repository, storages, typeDef, typeDef.id(found), tombstone, found)
@@ -119,7 +125,7 @@ const repo = <T extends MobilettoOrmObject>(
             const id = this.resolveId(idVal, "purge");
             const found = await this.findById(id, { removed: true });
             if (!typeDef.isTombstone(found as T)) {
-                throw new MobilettoOrmSyncError(idVal);
+                throw new MobilettoOrmSyncError(id, `purge(${id}}: object must first be removed`);
             }
             const objPath = typeDef.generalPath(id);
             const deletePromises = [];
@@ -147,7 +153,7 @@ const repo = <T extends MobilettoOrmObject>(
         async exists(id: MobilettoOrmIdArg): Promise<boolean> {
             return (await this.safeFindById(id)) != null;
         },
-        resolveId(id: MobilettoOrmIdArg, ctx?: string) {
+        resolveId(id: MobilettoOrmIdArg, ctx?: string): string {
             const resolved =
                 typeof id === "object" ? this.id(id as T) : typeof id === "string" && id.length > 0 ? id : null;
             if (!resolved) {

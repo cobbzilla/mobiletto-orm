@@ -10,12 +10,7 @@ import {
     MobilettoOrmValidationError,
     ValidationErrors,
 } from "mobiletto-orm-typedef";
-import {
-    MobilettoOrmCurrentVersionArg,
-    MobilettoOrmPredicate,
-    MobilettoOrmRepository,
-    MobilettoOrmStorageResolver,
-} from "./types.js";
+import { MobilettoOrmPredicate, MobilettoOrmRepository, MobilettoOrmStorageResolver } from "./types.js";
 
 export const resolveStorages = async (
     stores: MobilettoConnection[] | MobilettoOrmStorageResolver
@@ -27,7 +22,7 @@ export const resolveStorages = async (
 
 export const parseVersion = <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,
-    current: MobilettoOrmCurrentVersionArg
+    current: MobilettoOrmIdArg
 ) => {
     if (typeof current === "undefined" || current == null) {
         throw new MobilettoOrmError("no current version provided");
@@ -46,7 +41,7 @@ export const parseVersion = <T extends MobilettoOrmObject>(
 
 export const safeParseVersion = <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,
-    current: MobilettoOrmCurrentVersionArg,
+    current: MobilettoOrmIdArg,
     defaultValue: string
 ): string => {
     try {
@@ -59,7 +54,7 @@ export const safeParseVersion = <T extends MobilettoOrmObject>(
 export const findVersion = async <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,
     id: MobilettoOrmIdArg,
-    current?: MobilettoOrmCurrentVersionArg
+    current?: MobilettoOrmIdArg
 ): Promise<T> => {
     const found = (await repository.findById(id)) as T;
     const foundVersion = found._meta?.version;

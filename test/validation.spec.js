@@ -278,8 +278,12 @@ describe("validation test", async () => {
     });
     it("successfully updates only the comments on the object", async () => {
         const newComments = rand(20);
-        const changes = { id: test.updatedThing._meta.id, comments: newComments };
-        test.updatedThing = await test.repo.update(changes, test.updatedThing);
+        const changes = {
+            _meta: test.updatedThing._meta,
+            id: test.updatedThing._meta.id,
+            comments: newComments,
+        };
+        test.updatedThing = await test.repo.update(changes);
         expect(test.newThing.int).eq(100);
         expect(test.updatedThing.comments).eq(newComments);
         expect(test.updatedThing.value).eq(test.newThing.value);
