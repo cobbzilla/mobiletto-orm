@@ -28,6 +28,9 @@ export type MobilettoOrmMetadata = MobilettoMetadata & {
     data?: Buffer;
     object?: MobilettoOrmObject;
 };
+export type MobilettoOrmPurgeOpts = {
+    force?: boolean;
+};
 export type MobilettoOrmPurgeResult = string | string[];
 export type MobilettoOrmPurgeResults = MobilettoOrmPurgeResult[];
 export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
@@ -38,7 +41,7 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     create: (thing: T) => Promise<T>;
     update: (editedThing: T) => Promise<T>;
     remove: (thing: MobilettoOrmIdArg) => Promise<MobilettoOrmObject>;
-    purge: (idVal: MobilettoOrmIdArg) => Promise<MobilettoOrmPurgeResults>;
+    purge: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmPurgeOpts) => Promise<MobilettoOrmPurgeResults>;
     exists: (id: MobilettoOrmIdArg) => Promise<boolean>;
     resolveId: (idVal: MobilettoOrmIdArg, ctx?: string) => string;
     findById: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T>;

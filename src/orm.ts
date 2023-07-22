@@ -20,6 +20,7 @@ import {
     MobilettoOrmMetadata,
     MobilettoOrmObjectInstance,
     MobilettoOrmPredicate,
+    MobilettoOrmPurgeOpts,
     MobilettoOrmPurgeResult,
     MobilettoOrmPurgeResults,
     MobilettoOrmRepository,
@@ -123,10 +124,11 @@ const repo = <T extends MobilettoOrmObject>(
                 await verifyWrite(repository, storages, typeDef, typeDef.id(found), tombstone, found)
             ) as MobilettoOrmObject;
         },
-        async purge(idVal: MobilettoOrmIdArg): Promise<MobilettoOrmPurgeResults> {
+        async purge(idVal: MobilettoOrmIdArg, opts?: MobilettoOrmPurgeOpts): Promise<MobilettoOrmPurgeResults> {
             const id = this.resolveId(idVal, "purge");
             const found = await this.findById(id, { removed: true });
-            if (!typeDef.isTombstone(found as T)) {
+            const force = (opts && opts.force === true) || false;
+            if (!force && !typeDef.isTombstone(found as T)) {
                 throw new MobilettoOrmSyncError(id, `purge(${id}}: object must first be removed`);
             }
             const objPath = typeDef.generalPath(id);

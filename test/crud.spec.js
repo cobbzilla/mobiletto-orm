@@ -284,6 +284,23 @@ describe("CRUD test", async () => {
         expect(all[0]._meta.version).eq(test.removedThing._meta.version);
         expect(all[0]._meta.removed).eq(true);
     });
+    it("should create a new thing to forcibly purge", async () => {
+        const now = Date.now();
+        test.newThing2 = await test.repo.create({ id: thingID + rand(2), value: rand(2) });
+        expect(test.newThing2._meta.ctime).greaterThanOrEqual(now, "ctime was too old");
+        expect(test.newThing2._meta.mtime).equals(
+            test.newThing2._meta.ctime,
+            "mtime was different from ctime on newly created thing"
+        );
+    });
+    it("should forcibly purge the new thing", async () => {
+        const result = await test.repo.purge(test.newThing2._meta.id, { force: true });
+        expect(result).is.not.undefined;
+        expect(result.length).eq(test.storages.length);
+    });
+    it("should no longer find the new thing", async () => {
+        expect(await test.repo.safeFindById(test.newThing2._meta.id)).to.be.null;
+    });
 });
 
 const typeDefAltIdConfig = {

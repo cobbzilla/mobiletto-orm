@@ -47,6 +47,7 @@ export const initTest = (t) => {
     t.factory = null;
     t.repo = null;
     t.newThing = null;
+    t.newThing2 = null;
     t.updatedThing = null;
     t.removedThing = null;
     t.newThings = [];
