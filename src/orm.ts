@@ -106,7 +106,7 @@ const repo = <T extends MobilettoOrmObject>(
             const toWrite = Object.assign({}, found, obj);
             return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite, found)) as T;
         },
-        async remove(thingToRemove: MobilettoOrmIdArg): Promise<T> {
+        async remove(thingToRemove: MobilettoOrmIdArg): Promise<MobilettoOrmObject> {
             if (typeof thingToRemove === "string" || !thingToRemove?._meta?.version) {
                 thingToRemove = await this.findById(thingToRemove);
             }
@@ -121,7 +121,7 @@ const repo = <T extends MobilettoOrmObject>(
             const tombstone = typeDef.tombstone(found);
             return typeDef.redact(
                 await verifyWrite(repository, storages, typeDef, typeDef.id(found), tombstone, found)
-            ) as T;
+            ) as MobilettoOrmObject;
         },
         async purge(idVal: MobilettoOrmIdArg): Promise<MobilettoOrmPurgeResults> {
             const id = this.resolveId(idVal, "purge");
