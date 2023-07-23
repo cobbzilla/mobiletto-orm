@@ -10,7 +10,13 @@ import {
     MobilettoOrmValidationError,
     ValidationErrors,
 } from "mobiletto-orm-typedef";
-import { MobilettoOrmPredicate, MobilettoOrmRepository, MobilettoOrmStorageResolver } from "./types.js";
+import {
+    MobilettoOrmApplyFunc,
+    MobilettoOrmFindOpts,
+    MobilettoOrmPredicate,
+    MobilettoOrmRepository,
+    MobilettoOrmStorageResolver,
+} from "./types.js";
 
 export const resolveStorages = async (
     stores: MobilettoConnection[] | MobilettoOrmStorageResolver
@@ -240,6 +246,9 @@ export const promiseFindById = <T extends MobilettoOrmObject>(
     removed: boolean,
     noRedact: boolean,
     predicate: MobilettoOrmPredicate | null,
+    apply: MobilettoOrmApplyFunc | null,
+    applyResults: Record<string, unknown> | null,
+    noCollect: boolean,
     found: Record<string, MobilettoOrmObject | null>,
     addedAnything: MobilettoFoundMarker
 ): Promise<string> => {
@@ -251,11 +260,27 @@ export const promiseFindById = <T extends MobilettoOrmObject>(
             .then((thing) => {
                 const obj = thing as MobilettoOrmObject;
                 if (includeRemovedThing(removed, obj) && (predicate == null || predicate(obj))) {
-                    found[id] = noRedact ? obj : typeDef.redact(obj);
+                    const maybeRedacted = noRedact ? obj : typeDef.redact(obj);
+                    if (!noCollect) {
+                        found[id] = maybeRedacted;
+                    }
                     if (first) {
                         addedAnything.found = true;
                     }
-                    resolve(`${logPrefix} resolving FOUND: ${JSON.stringify(obj)}`);
+                    if (apply) {
+                        apply(maybeRedacted)
+                            .then((result: unknown) => {
+                                if (applyResults && result) {
+                                    applyResults[id] = result;
+                                }
+                                resolve(`${logPrefix} resolving FOUND (after apply): ${JSON.stringify(found[id])}`);
+                            })
+                            .catch((e) => {
+                                resolve(`${logPrefix} resolving as error (after apply): ${e}`);
+                            });
+                    } else {
+                        resolve(`${logPrefix} resolving FOUND: ${JSON.stringify(found[id])}`);
+                    }
                 } else {
                     resolve(`${logPrefix} resolving (not including removed thing): ${JSON.stringify(obj)}`);
                 }
@@ -291,4 +316,22 @@ export const validateIndexes = async <T extends MobilettoOrmObject>(
     if (hasErrors(errors)) {
         throw new MobilettoOrmValidationError(errors);
     }
+};
+
+export const redactAndApply = async <T extends MobilettoOrmObject>(
+    typeDef: MobilettoOrmTypeDef,
+    thing: T,
+    opts?: MobilettoOrmFindOpts
+): Promise<T> => {
+    if (!opts) return thing;
+    const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions();
+    const maybeRedacted: T = noRedact ? thing : (typeDef.redact(thing) as T);
+    const apply = opts && opts.apply ? opts.apply : null;
+    if (apply) {
+        const result = await apply(maybeRedacted);
+        if (result && opts.applyResults) {
+            opts.applyResults[typeDef.id(thing)] = result;
+        }
+    }
+    return maybeRedacted;
 };

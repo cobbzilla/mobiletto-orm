@@ -1,8 +1,7 @@
 import path from "path";
-import { M_DIR, logger, MobilettoConnection, MobilettoMetadata, MobilettoConnectionFunction } from "mobiletto-base";
+import { logger, MobilettoConnection, MobilettoMetadata, MobilettoConnectionFunction } from "mobiletto-base";
 import {
     MobilettoOrmTypeDef,
-    MobilettoOrmValidationError,
     MobilettoOrmSyncError,
     MobilettoOrmNotFoundError,
     MobilettoOrmTypeDefConfig,
@@ -12,10 +11,12 @@ import {
     MobilettoOrmNormalizeFunc,
     ValidationErrors,
     addError,
-    hasErrors,
+    DEFAULT_FIELD_INDEX_LEVELS,
 } from "mobiletto-orm-typedef";
 import {
     FIND_FIRST,
+    MobilettoMatchAll,
+    MobilettoOrmApplyFunc,
     MobilettoOrmFindOpts,
     MobilettoOrmMetadata,
     MobilettoOrmObjectInstance,
@@ -32,10 +33,12 @@ import {
     includeRemovedThing,
     MobilettoFoundMarker,
     promiseFindById,
+    redactAndApply,
     resolveStorages,
     validateIndexes,
     verifyWrite,
 } from "./util.js";
+import { search } from "./search.js";
 
 const repo = <T extends MobilettoOrmObject>(
     storages: MobilettoConnection[] | MobilettoOrmStorageResolver,
@@ -168,7 +171,8 @@ const repo = <T extends MobilettoOrmObject>(
         async findById(idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts): Promise<T> {
             const id = this.resolveId(idVal, "findById");
 
-            const objPath = typeDef.generalPath(id);
+            const idPath = !!(opts && opts.idPath && opts.idPath === true);
+            const objPath = idPath ? id : typeDef.generalPath(id);
             const listPromises = [];
             const found: Record<string, MobilettoOrmObjectInstance> = {};
             const absent: MobilettoConnection[] = [];
@@ -299,79 +303,36 @@ const repo = <T extends MobilettoOrmObject>(
             }
             return (noRedact ? newestObj : typeDef.redact(newestObj)) as T;
         },
-        async find(predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts): Promise<T[]> {
-            const typePath = typeDef.typePath();
+        async find(opts: MobilettoOrmFindOpts): Promise<T[]> {
+            const predicate = opts && opts.predicate ? opts.predicate : null;
+            if (!predicate) {
+                throw new MobilettoOrmError(`find: opts.predicate is required`);
+            }
+
+            const searchPath = typeDef.typePath() + (opts && opts.idPath ? opts.idPath : "");
             const removed = !!(opts && opts.removed && opts.removed === true);
             const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions();
-
+            const noCollect = !!(opts && opts.noCollect && opts.noCollect === true) || false;
             const promises: Promise<void>[] = [];
-            const found: Record<string, T | null> = {};
+            const foundByHash: Record<string, T | null> = {};
+            const foundById: Record<string, T | null> = {};
 
             // read all things concurrently
             for (const storage of await resolveStorages(storages)) {
                 promises.push(
-                    new Promise<void>((resolve) => {
-                        storage
-                            .safeList(typePath)
-                            .then((listing: MobilettoMetadata[] | null) => {
-                                if (!listing || listing.length === 0) {
-                                    resolve();
-                                }
-                                const typeList: MobilettoMetadata[] = (listing as MobilettoMetadata[]).filter(
-                                    (m) => m.type === M_DIR
-                                );
-                                if (typeList.length === 0) {
-                                    resolve();
-                                }
-                                const findByIdPromises: Promise<void>[] = [];
-                                for (const dir of typeList) {
-                                    // find the latest version of each distinct thing
-                                    const id: string = path.basename(dir.name);
-                                    if (typeof found[id] === "undefined") {
-                                        found[id] = null;
-                                        findByIdPromises.push(
-                                            new Promise<void>((resolve2) => {
-                                                repository
-                                                    .findById(id, { removed, noRedact })
-                                                    .then((thing) => {
-                                                        // does the thing match the predicate? if so, include in results
-                                                        // removed things are only included if opts.removed was set
-                                                        if (thing) {
-                                                            const obj = thing as T;
-                                                            if (predicate(obj) && includeRemovedThing(removed, obj)) {
-                                                                found[id] = (noRedact ? obj : typeDef.redact(obj)) as T;
-                                                            }
-                                                        }
-                                                        resolve2();
-                                                    })
-                                                    .catch((e3: Error) => {
-                                                        if (logger.isWarnEnabled()) {
-                                                            logger.warn(`find: findById(${id}): ${e3}`);
-                                                        }
-                                                        resolve2();
-                                                    });
-                                            })
-                                        );
-                                    }
-                                }
-                                Promise.all(findByIdPromises)
-                                    .then(() => {
-                                        resolve();
-                                    })
-                                    .catch((e4: Error) => {
-                                        if (logger.isWarnEnabled()) {
-                                            logger.warn(`find: ${e4}`);
-                                        }
-                                        resolve();
-                                    });
-                            })
-                            .catch((e2: Error) => {
-                                if (logger.isWarnEnabled()) {
-                                    logger.warn(`find: safeList(${typePath}): ${e2}`);
-                                }
-                                resolve();
-                            });
-                    })
+                    search(
+                        repository,
+                        storage,
+                        searchPath,
+                        removed,
+                        noRedact,
+                        noCollect,
+                        predicate,
+                        opts,
+                        promises,
+                        foundByHash,
+                        foundById
+                    )
                 );
             }
             await Promise.all(promises);
@@ -381,10 +342,10 @@ const repo = <T extends MobilettoOrmObject>(
                     logger.warn(`find: ${resolved} of ${promises.length} promises resolved`);
                 }
             }
-            return Object.values(found).filter((f) => f != null) as T[];
+            return Object.values(foundById).filter((f) => f != null) as T[];
         },
         async count(predicate: MobilettoOrmPredicate): Promise<number> {
-            return (await this.find(predicate)).length;
+            return (await this.find({ predicate })).length;
         },
         async findBy(
             field: string,
@@ -404,8 +365,12 @@ const repo = <T extends MobilettoOrmObject>(
             const first = !!(opts && typeof opts.first === "boolean" && opts.first);
             const removed = !!(opts && opts.removed && opts.removed);
             const noRedact = !!(opts && opts.noRedact && opts.noRedact) || !typeDef.hasRedactions();
+            const noCollect = !!(opts && opts.noCollect && opts.noCollect) || false;
             const predicate: MobilettoOrmPredicate | null =
                 opts && typeof opts.predicate === "function" ? opts.predicate : null;
+            const apply: MobilettoOrmApplyFunc | null = opts && typeof opts.apply === "function" ? opts.apply : null;
+            const applyResults: Record<string, unknown> | null =
+                opts && typeof opts.applyResults === "object" ? opts.applyResults : null;
 
             if (typeDef.primary && field === typeDef.primary) {
                 const foundById = (await this.findById(compValue, opts)) as T;
@@ -415,7 +380,7 @@ const repo = <T extends MobilettoOrmObject>(
                 if (predicate && !predicate(foundById)) {
                     return first ? null : [];
                 }
-                const maybeRedacted: T = noRedact ? foundById : (typeDef.redact(foundById) as T);
+                const maybeRedacted: T = await redactAndApply<T>(typeDef, foundById, opts);
                 return first ? maybeRedacted : [maybeRedacted];
             }
 
@@ -433,8 +398,9 @@ const repo = <T extends MobilettoOrmObject>(
                         if (first && addedAnything.found) {
                             resolve(`[1] storage(${storage.name}): already found, resolving`);
                         } else {
+                            const indexLevels = typeDef.fields[field].indexLevels || DEFAULT_FIELD_INDEX_LEVELS;
                             storage
-                                .safeList(idxPath)
+                                .safeList(idxPath, { recursive: indexLevels > 0 })
                                 .then((indexEntries: MobilettoMetadata[]) => {
                                     const findByIdPromises: Promise<string>[] = [];
                                     for (const entry of indexEntries) {
@@ -456,6 +422,9 @@ const repo = <T extends MobilettoOrmObject>(
                                                     removed,
                                                     noRedact,
                                                     predicate,
+                                                    apply,
+                                                    applyResults,
+                                                    noCollect,
                                                     found,
                                                     addedAnything
                                                 )
@@ -517,7 +486,7 @@ const repo = <T extends MobilettoOrmObject>(
             opts?: MobilettoOrmFindOpts
         ): Promise<T | null> {
             try {
-                const found = await this.safeFindBy(field, value, FIND_FIRST);
+                const found = await this.safeFindBy(field, value, Object.assign({}, FIND_FIRST, opts || {}));
                 return found ? (found as T) : null;
             } catch (e) {
                 if (logger.isWarnEnabled()) {
@@ -609,10 +578,10 @@ const repo = <T extends MobilettoOrmObject>(
             return found;
         },
         async findAll(opts?: MobilettoOrmFindOpts): Promise<T[]> {
-            return repository.find(() => true, opts);
+            return repository.find(Object.assign({ predicate: MobilettoMatchAll }, opts || {}));
         },
         async findAllIncludingRemoved(): Promise<T[]> {
-            return repository.find(() => true, { removed: true });
+            return repository.find({ predicate: MobilettoMatchAll, removed: true });
         },
         async findSingleton(): Promise<T> {
             if (!typeDef.singleton) {

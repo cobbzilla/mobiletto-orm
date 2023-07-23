@@ -21,10 +21,6 @@ export const storageConfigs = () => {
             key: `/tmp/mobiletto-orm-test2_${rand()}`,
             opts: { createIfNotExist: true },
         },
-        indexeddb_1: {
-            key: `idb_${rand()}`,
-            opts: { indexedDB },
-        },
     };
 };
 

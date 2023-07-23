@@ -3,11 +3,18 @@ import { MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
 import { MobilettoOrmIdArg, MobilettoOrmObject, MobilettoOrmTypeDef, MobilettoOrmTypeDefConfig } from "mobiletto-orm-typedef";
 export type MobilettoOrmStorageResolver = () => Promise<MobilettoConnection[]>;
 export type MobilettoOrmPredicate = (thing: MobilettoOrmObject) => boolean;
+export declare const MobilettoMatchAll: MobilettoOrmPredicate;
+export type MobilettoOrmApplyFunc = (thing: MobilettoOrmObject) => Promise<unknown>;
+export declare const MobilettoNoopFunc: MobilettoOrmApplyFunc;
 export type MobilettoOrmFindOpts = {
     first?: boolean;
     removed?: boolean;
     noRedact?: boolean;
     predicate?: MobilettoOrmPredicate;
+    apply?: MobilettoOrmApplyFunc;
+    applyResults?: Record<string, unknown>;
+    noCollect?: boolean;
+    idPath?: boolean;
 };
 export declare const FIND_FIRST: {
     first: boolean;
@@ -46,7 +53,7 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     resolveId: (idVal: MobilettoOrmIdArg, ctx?: string) => string;
     findById: (idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T>;
     safeFindById: (id: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T | null>;
-    find: (predicate: MobilettoOrmPredicate, opts?: MobilettoOrmFindOpts) => Promise<T[]>;
+    find: (opts: MobilettoOrmFindOpts) => Promise<T[]>;
     count: (predicate: MobilettoOrmPredicate) => Promise<number>;
     findBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<T | T[] | null>;
     safeFindBy: (field: string, value: any, opts?: MobilettoOrmFindOpts) => Promise<T | T[] | null>;
