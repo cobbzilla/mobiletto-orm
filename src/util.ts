@@ -8,7 +8,7 @@ import {
     MobilettoOrmSyncError,
     MobilettoOrmTypeDef,
     MobilettoOrmValidationError,
-    ValidationErrors,
+    MobilettoOrmValidationErrors,
 } from "mobiletto-orm-typedef";
 import {
     MobilettoOrmApplyFunc,
@@ -297,7 +297,7 @@ export const promiseFindById = <T extends MobilettoOrmObject>(
 export const validateIndexes = async <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,
     thing: T,
-    errors: ValidationErrors
+    errors: MobilettoOrmValidationErrors
 ): Promise<void> => {
     for (const idx of repository.typeDef.indexes.filter((i) => i.unique)) {
         if (typeof thing[idx.field] === "undefined" || thing[idx.field] == null) {

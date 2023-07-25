@@ -9,7 +9,7 @@ import {
     MobilettoOrmIdArg,
     MobilettoOrmError,
     MobilettoOrmNormalizeFunc,
-    ValidationErrors,
+    MobilettoOrmValidationErrors,
     addError,
     DEFAULT_FIELD_INDEX_LEVELS,
 } from "mobiletto-orm-typedef";
@@ -66,7 +66,7 @@ const repo = <T extends MobilettoOrmObject>(
             if (!id) {
                 throw new MobilettoOrmNotFoundError(typeof obj !== "undefined" ? JSON.stringify(obj) : "undefined");
             }
-            const errors: ValidationErrors = {};
+            const errors: MobilettoOrmValidationErrors = {};
             const found = await repository.safeFindById(id);
             if (found != null) {
                 addError(errors, "id", "exists");
