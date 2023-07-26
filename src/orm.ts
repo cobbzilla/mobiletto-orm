@@ -74,7 +74,7 @@ const repo = <T extends MobilettoOrmObject>(
             await validateIndexes<T>(this, obj, errors);
 
             obj._meta = typeDef.newMeta(id);
-            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, obj)) as T;
+            return (await verifyWrite(repository, storages, typeDef, id, obj)) as T;
         },
         async update(editedThing: T): Promise<T> {
             const id = typeDef.id(editedThing);
