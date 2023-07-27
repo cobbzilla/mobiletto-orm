@@ -305,6 +305,7 @@ describe("CRUD test", async () => {
 
 const typeDefAltIdConfig = {
     typeName: `TestAltIdType_${rand(10)}`,
+    alternateIdFields: ["name"],
     fields: { name: {} },
 };
 
@@ -331,5 +332,46 @@ describe("Alternate ID test", async () => {
         expect(all[0].name).eq(test.newThing.name);
         expect(all[0]._meta.id).eq(test.newThing._meta.id);
         expect(all[0]._meta.version).eq(test.newThing._meta.version);
+    });
+});
+
+const primaryConfig = {
+    typeName: `TestPrimaryType_${rand(10)}`,
+    fields: {
+        name: {
+            primary: true,
+            normalize: () => {
+                return rand(6);
+            },
+        },
+    },
+};
+
+describe("Primary test", async () => {
+    before((done) => initStorage(done, primaryConfig));
+    it("findAll should return an empty array", async () => {
+        const all = await test.repo.findAll();
+        expect(all).to.not.be.null;
+        expect(all.length).eq(0);
+    });
+    it("creates a thing using a primary field with a normalize function", async () => {
+        const name = rand(3);
+        test.newThing = await test.repo.create({ name });
+        expect(test.newThing._meta.id).not.equals(
+            name,
+            `expected newThing.id to be a random value different from ${name}`
+        );
+        expect(test.newThing.name).not.equals(
+            name,
+            `expected newThing.name to be a random value different from ${name}`
+        );
+        expect(test.newThing.name).equals(
+            test.newThing._meta.id,
+            `expected newThing.name (${test.newThing.name}) === newThing._meta.id (${test.newThing._meta.id})`
+        );
+        expect(test.newThing._meta.id).equals(
+            test.newThing._meta.id,
+            "expected newThing.id to be the same as newThing.name"
+        );
     });
 });

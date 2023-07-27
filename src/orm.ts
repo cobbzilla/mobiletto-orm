@@ -49,7 +49,7 @@ const repo = <T extends MobilettoOrmObject>(
     const repository: MobilettoOrmRepository<T> = {
         typeDef,
         async validate(thing: T, current?: T): Promise<T> {
-            return typeDef.validate(thing, current) as Promise<T>;
+            return (await typeDef.validate(thing, current)) as T;
         },
         id(thing: T): string | null {
             return typeDef.id(thing);
