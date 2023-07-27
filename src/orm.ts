@@ -359,7 +359,7 @@ const repo = <T extends MobilettoOrmObject>(
                 typeDef.fields[field] &&
                 value &&
                 typeof typeDef.fields[field].normalize === "function"
-                    ? (typeDef.fields[field].normalize as MobilettoOrmNormalizeFunc)(value)
+                    ? await (typeDef.fields[field].normalize as MobilettoOrmNormalizeFunc)(value)
                     : value;
             const idxPath: string = typeDef.indexPath(field, compValue);
             const first = !!(opts && typeof opts.first === "boolean" && opts.first);
