@@ -5,6 +5,8 @@ import {
     MobilettoOrmIdArg,
     MobilettoOrmObject,
     MobilettoOrmPredicate,
+    MobilettoOrmPurgeOpts,
+    MobilettoOrmPurgeResults,
     MobilettoOrmTypeDef,
     MobilettoOrmTypeDefConfig,
 } from "mobiletto-orm-typedef";
@@ -22,13 +24,6 @@ export type MobilettoOrmMetadata = MobilettoMetadata & {
     data?: Buffer;
     object?: MobilettoOrmObject;
 };
-
-export type MobilettoOrmPurgeOpts = {
-    force?: boolean;
-};
-
-export type MobilettoOrmPurgeResult = string | string[];
-export type MobilettoOrmPurgeResults = MobilettoOrmPurgeResult[];
 
 export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     typeDef: MobilettoOrmTypeDef;

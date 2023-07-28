@@ -17,15 +17,15 @@ import {
     MobilettoOrmValidationErrors,
     addError,
     DEFAULT_FIELD_INDEX_LEVELS,
+    MobilettoOrmPurgeOpts,
+    MobilettoOrmPurgeResult,
+    MobilettoOrmPurgeResults,
     MobilettoOrmFieldValue,
     MobilettoOrmFieldIndexableValue,
 } from "mobiletto-orm-typedef";
 import {
     MobilettoOrmMetadata,
     MobilettoOrmObjectInstance,
-    MobilettoOrmPurgeOpts,
-    MobilettoOrmPurgeResult,
-    MobilettoOrmPurgeResults,
     MobilettoOrmRepository,
     MobilettoOrmRepositoryFactory,
     MobilettoOrmStorageResolver,

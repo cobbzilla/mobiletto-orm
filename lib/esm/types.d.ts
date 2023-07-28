@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
-import { MobilettoOrmFieldValue, MobilettoOrmFindOpts, MobilettoOrmIdArg, MobilettoOrmObject, MobilettoOrmPredicate, MobilettoOrmTypeDef, MobilettoOrmTypeDefConfig } from "mobiletto-orm-typedef";
+import { MobilettoOrmFieldValue, MobilettoOrmFindOpts, MobilettoOrmIdArg, MobilettoOrmObject, MobilettoOrmPredicate, MobilettoOrmPurgeOpts, MobilettoOrmPurgeResults, MobilettoOrmTypeDef, MobilettoOrmTypeDefConfig } from "mobiletto-orm-typedef";
 export type MobilettoOrmStorageResolver = () => Promise<MobilettoConnection[]>;
 export type MobilettoOrmObjectInstance = {
     storage: MobilettoConnection;
@@ -12,11 +12,6 @@ export type MobilettoOrmMetadata = MobilettoMetadata & {
     data?: Buffer;
     object?: MobilettoOrmObject;
 };
-export type MobilettoOrmPurgeOpts = {
-    force?: boolean;
-};
-export type MobilettoOrmPurgeResult = string | string[];
-export type MobilettoOrmPurgeResults = MobilettoOrmPurgeResult[];
 export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     typeDef: MobilettoOrmTypeDef;
     id: (thing: T) => string | null;
