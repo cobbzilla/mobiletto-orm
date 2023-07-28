@@ -1,6 +1,6 @@
 import { MobilettoConnection } from "mobiletto-base";
-import { MobilettoOrmIdArg, MobilettoOrmObject, MobilettoOrmTypeDef, MobilettoOrmValidationErrors } from "mobiletto-orm-typedef";
-import { MobilettoOrmApplyFunc, MobilettoOrmFindOpts, MobilettoOrmPredicate, MobilettoOrmRepository, MobilettoOrmStorageResolver } from "./types.js";
+import { MobilettoOrmIdArg, MobilettoOrmObject, MobilettoOrmTypeDef, MobilettoOrmApplyFunc, MobilettoOrmFindOpts, MobilettoOrmPredicate, MobilettoOrmValidationErrors } from "mobiletto-orm-typedef";
+import { MobilettoOrmRepository, MobilettoOrmStorageResolver } from "./types.js";
 export declare const resolveStorages: (stores: MobilettoConnection[] | MobilettoOrmStorageResolver) => Promise<MobilettoConnection[]>;
 export declare const parseVersion: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, current: MobilettoOrmIdArg) => string;
 export declare const safeParseVersion: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, current: MobilettoOrmIdArg, defaultValue: string) => string;

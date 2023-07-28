@@ -1,30 +1,7 @@
 /// <reference types="node" />
 import { MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
-import { MobilettoOrmIdArg, MobilettoOrmObject, MobilettoOrmTypeDef, MobilettoOrmTypeDefConfig } from "mobiletto-orm-typedef";
+import { MobilettoOrmFindOpts, MobilettoOrmIdArg, MobilettoOrmObject, MobilettoOrmPredicate, MobilettoOrmTypeDef, MobilettoOrmTypeDefConfig } from "mobiletto-orm-typedef";
 export type MobilettoOrmStorageResolver = () => Promise<MobilettoConnection[]>;
-export type MobilettoOrmPredicate = (thing: MobilettoOrmObject) => boolean;
-export declare const MobilettoMatchAll: MobilettoOrmPredicate;
-export type MobilettoOrmApplyFunc = (thing: MobilettoOrmObject) => Promise<unknown>;
-export declare const MobilettoNoopFunc: MobilettoOrmApplyFunc;
-export type MobilettoOrmFindOpts = {
-    first?: boolean;
-    removed?: boolean;
-    noRedact?: boolean;
-    predicate?: MobilettoOrmPredicate;
-    apply?: MobilettoOrmApplyFunc;
-    applyResults?: Record<string, unknown>;
-    noCollect?: boolean;
-    idPath?: boolean;
-};
-export declare const FIND_FIRST: {
-    first: boolean;
-};
-export declare const FIND_REMOVED: {
-    removed: boolean;
-};
-export declare const FIND_NOREDACT: {
-    noRedact: boolean;
-};
 export type MobilettoOrmObjectInstance = {
     storage: MobilettoConnection;
     object: MobilettoOrmObject;

@@ -1,7 +1,7 @@
 import { logger, M_DIR, MobilettoMetadata } from "mobiletto-base";
-import { MobilettoOrmObject, OBJ_DIR_SUFFIX } from "mobiletto-orm-typedef";
+import { MobilettoOrmObject, MobilettoOrmFindOpts, MobilettoOrmPredicate, OBJ_DIR_SUFFIX } from "mobiletto-orm-typedef";
 import { includeRemovedThing, redactAndApply } from "./util.js";
-import { MobilettoOrmFindOpts, MobilettoOrmPredicate, MobilettoOrmRepository } from "./types.js";
+import { MobilettoOrmRepository } from "./types.js";
 
 export const search = async <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,

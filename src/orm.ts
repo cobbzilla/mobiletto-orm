@@ -1,6 +1,10 @@
 import path from "path";
 import { logger, MobilettoConnection, MobilettoMetadata, MobilettoConnectionFunction } from "mobiletto-base";
 import {
+    FIND_FIRST,
+    MobilettoMatchAll,
+    MobilettoOrmApplyFunc,
+    MobilettoOrmFindOpts,
     MobilettoOrmTypeDef,
     MobilettoOrmSyncError,
     MobilettoOrmNotFoundError,
@@ -9,18 +13,14 @@ import {
     MobilettoOrmIdArg,
     MobilettoOrmError,
     MobilettoOrmNormalizeFunc,
+    MobilettoOrmPredicate,
     MobilettoOrmValidationErrors,
     addError,
     DEFAULT_FIELD_INDEX_LEVELS,
 } from "mobiletto-orm-typedef";
 import {
-    FIND_FIRST,
-    MobilettoMatchAll,
-    MobilettoOrmApplyFunc,
-    MobilettoOrmFindOpts,
     MobilettoOrmMetadata,
     MobilettoOrmObjectInstance,
-    MobilettoOrmPredicate,
     MobilettoOrmPurgeOpts,
     MobilettoOrmPurgeResult,
     MobilettoOrmPurgeResults,

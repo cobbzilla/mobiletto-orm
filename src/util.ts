@@ -7,16 +7,13 @@ import {
     MobilettoOrmObject,
     MobilettoOrmSyncError,
     MobilettoOrmTypeDef,
-    MobilettoOrmValidationError,
-    MobilettoOrmValidationErrors,
-} from "mobiletto-orm-typedef";
-import {
     MobilettoOrmApplyFunc,
     MobilettoOrmFindOpts,
     MobilettoOrmPredicate,
-    MobilettoOrmRepository,
-    MobilettoOrmStorageResolver,
-} from "./types.js";
+    MobilettoOrmValidationError,
+    MobilettoOrmValidationErrors,
+} from "mobiletto-orm-typedef";
+import { MobilettoOrmRepository, MobilettoOrmStorageResolver } from "./types.js";
 
 export const resolveStorages = async (
     stores: MobilettoConnection[] | MobilettoOrmStorageResolver
