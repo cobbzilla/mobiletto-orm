@@ -2,7 +2,7 @@ import { after } from "mocha";
 import { registerDriver, mobiletto, logger, shutdownMobiletto } from "mobiletto-base";
 import { repositoryFactory } from "../lib/esm/index.js";
 import { MobilettoOrmError, rand } from "mobiletto-orm-typedef";
-import { indexedDB } from "fake-indexeddb";
+// import { indexedDB } from "fake-indexeddb";
 
 import { storageClient as idbDriver } from "mobiletto-driver-indexeddb";
 import { storageClient as localDriver } from "mobiletto-driver-local";

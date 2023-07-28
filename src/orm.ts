@@ -1,5 +1,5 @@
 import path from "path";
-import { logger, MobilettoConnection, MobilettoMetadata, MobilettoConnectionFunction } from "mobiletto-base";
+import { logger, MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
 import {
     FIND_FIRST,
     MobilettoMatchAll,
@@ -17,6 +17,8 @@ import {
     MobilettoOrmValidationErrors,
     addError,
     DEFAULT_FIELD_INDEX_LEVELS,
+    MobilettoOrmFieldValue,
+    MobilettoOrmFieldIndexableValue,
 } from "mobiletto-orm-typedef";
 import {
     MobilettoOrmMetadata,
@@ -349,9 +351,7 @@ const repo = <T extends MobilettoOrmObject>(
         },
         async findBy(
             field: string,
-            /* eslint-disable @typescript-eslint/no-explicit-any */
-            value: any,
-            /* eslint-enable @typescript-eslint/no-explicit-any */
+            value: MobilettoOrmFieldValue,
             opts?: MobilettoOrmFindOpts
         ): Promise<T | T[] | null> {
             const compValue =
@@ -361,7 +361,7 @@ const repo = <T extends MobilettoOrmObject>(
                 typeof typeDef.fields[field].normalize === "function"
                     ? await (typeDef.fields[field].normalize as MobilettoOrmNormalizeFunc)(value)
                     : value;
-            const idxPath: string = typeDef.indexPath(field, compValue);
+            const idxPath: string = typeDef.indexPath(field, compValue as MobilettoOrmFieldIndexableValue);
             const first = !!(opts && typeof opts.first === "boolean" && opts.first);
             const removed = !!(opts && opts.removed && opts.removed);
             const noRedact = !!(opts && opts.noRedact && opts.noRedact) || !typeDef.hasRedactions();
@@ -373,7 +373,7 @@ const repo = <T extends MobilettoOrmObject>(
                 opts && typeof opts.applyResults === "object" ? opts.applyResults : null;
 
             if (typeDef.primary && field === typeDef.primary) {
-                const foundById = (await this.findById(compValue, opts)) as T;
+                const foundById = (await this.findById(compValue as MobilettoOrmIdArg, opts)) as T;
                 if (!removed && typeDef.isTombstone(foundById)) {
                     return first ? null : [];
                 }
@@ -463,9 +463,7 @@ const repo = <T extends MobilettoOrmObject>(
         },
         async safeFindBy(
             field: string,
-            /* eslint-disable @typescript-eslint/no-explicit-any */
-            value: any,
-            /* eslint-enable @typescript-eslint/no-explicit-any */
+            value: MobilettoOrmFieldValue,
             opts?: MobilettoOrmFindOpts
         ): Promise<T | T[] | null> {
             const first = (opts && typeof opts.first && opts.first === true) || false;
@@ -480,9 +478,7 @@ const repo = <T extends MobilettoOrmObject>(
         },
         async safeFindFirstBy(
             field: string,
-            /* eslint-disable @typescript-eslint/no-explicit-any */
-            value: any,
-            /* eslint-enable @typescript-eslint/no-explicit-any */
+            value: MobilettoOrmFieldValue,
             opts?: MobilettoOrmFindOpts
         ): Promise<T | null> {
             try {
@@ -495,7 +491,7 @@ const repo = <T extends MobilettoOrmObject>(
                 return null;
             }
         },
-        async existsWith(field: string, value: any): Promise<boolean> {
+        async existsWith(field: string, value: MobilettoOrmFieldValue): Promise<boolean> {
             const found = await this.safeFindBy(field, value);
             return (
                 found != null &&

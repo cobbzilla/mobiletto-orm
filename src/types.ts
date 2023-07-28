@@ -1,5 +1,6 @@
 import { MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
 import {
+    MobilettoOrmFieldValue,
     MobilettoOrmFindOpts,
     MobilettoOrmIdArg,
     MobilettoOrmObject,
@@ -44,27 +45,10 @@ export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     safeFindById: (id: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts) => Promise<T | null>;
     find: (opts: MobilettoOrmFindOpts) => Promise<T[]>;
     count: (predicate: MobilettoOrmPredicate) => Promise<number>;
-    findBy: (
-        field: string,
-        /* eslint-disable @typescript-eslint/no-explicit-any */
-        value: any,
-        /* eslint-enable @typescript-eslint/no-explicit-any */
-        opts?: MobilettoOrmFindOpts
-    ) => Promise<T | T[] | null>;
-    safeFindBy: (
-        field: string,
-        /* eslint-disable @typescript-eslint/no-explicit-any */
-        value: any,
-        /* eslint-enable @typescript-eslint/no-explicit-any */
-        opts?: MobilettoOrmFindOpts
-    ) => Promise<T | T[] | null>;
-    safeFindFirstBy: (
-        field: string,
-        /* eslint-disable @typescript-eslint/no-explicit-any */
-        value: any
-        /* eslint-enable @typescript-eslint/no-explicit-any */
-    ) => Promise<T | null>;
-    existsWith: (field: string, value: any) => Promise<boolean>;
+    findBy: (field: string, value: MobilettoOrmFieldValue, opts?: MobilettoOrmFindOpts) => Promise<T | T[] | null>;
+    safeFindBy: (field: string, value: MobilettoOrmFieldValue, opts?: MobilettoOrmFindOpts) => Promise<T | T[] | null>;
+    safeFindFirstBy: (field: string, value: MobilettoOrmFieldValue) => Promise<T | null>;
+    existsWith: (field: string, value: MobilettoOrmFieldValue) => Promise<boolean>;
     findVersionsById: (id: MobilettoOrmIdArg) => Promise<Record<string, MobilettoOrmMetadata[]>>;
     findAll: (opts?: MobilettoOrmFindOpts) => Promise<T[]>;
     findAllIncludingRemoved: () => Promise<T[]>;
