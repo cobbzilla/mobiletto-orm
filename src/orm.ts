@@ -2,7 +2,7 @@ import path from "path";
 import { logger, MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
 import {
     FIND_FIRST,
-    MobilettoMatchAll,
+    FIND_ALL,
     MobilettoOrmApplyFunc,
     MobilettoOrmFindOpts,
     MobilettoOrmTypeDef,
@@ -574,10 +574,10 @@ const repo = <T extends MobilettoOrmObject>(
             return found;
         },
         async findAll(opts?: MobilettoOrmFindOpts): Promise<T[]> {
-            return repository.find(Object.assign({ predicate: MobilettoMatchAll }, opts || {}));
+            return repository.find(Object.assign({ predicate: FIND_ALL }, opts || {}));
         },
         async findAllIncludingRemoved(): Promise<T[]> {
-            return repository.find({ predicate: MobilettoMatchAll, removed: true });
+            return repository.find({ predicate: FIND_ALL, removed: true });
         },
         async findSingleton(): Promise<T> {
             if (!typeDef.singleton) {
