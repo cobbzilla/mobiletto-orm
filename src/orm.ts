@@ -306,9 +306,10 @@ const repo = <T extends MobilettoOrmObject>(
             return (noRedact ? newestObj : typeDef.redact(newestObj)) as T;
         },
         async find(opts: MobilettoOrmFindOpts): Promise<T[]> {
-            const predicate = opts && opts.predicate ? opts.predicate : null;
-            if (!predicate) {
-                throw new MobilettoOrmError(`find: opts.predicate is required`);
+            let predicate = opts && opts.predicate ? opts.predicate : FIND_ALL;
+            if (typeof predicate !== "function") {
+                logger.warn(`find: opts.predicate was not a function, using FIND_ALL instead of: ${predicate}`);
+                predicate = FIND_ALL;
             }
 
             const searchPath = typeDef.typePath() + (opts && opts.idPath ? opts.idPath : "");
