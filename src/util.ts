@@ -14,6 +14,7 @@ import {
     MobilettoOrmValidationErrors,
 } from "mobiletto-orm-typedef";
 import { MobilettoOrmRepository, MobilettoOrmStorageResolver } from "./types.js";
+import { MobilettoOrmRepositoryOptions } from "./orm";
 
 export const resolveStorages = async (
     stores: MobilettoConnection[] | MobilettoOrmStorageResolver
@@ -84,6 +85,7 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
     typeDef: MobilettoOrmTypeDef,
     id: string,
     obj: MobilettoOrmObject,
+    opts?: MobilettoOrmRepositoryOptions,
     previous?: MobilettoOrmObject
 ) => {
     const writePromises: Promise<number | string | string[] | Error>[] = [];
@@ -91,7 +93,8 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
     const actualStorages = await resolveStorages(storages);
     const expectedSuccessCount = typeDef.minWrites < 0 ? actualStorages.length : typeDef.minWrites;
     const objPath = typeDef.specificPath(obj);
-    const objJson = JSON.stringify(obj);
+    const prettyJson = opts && opts.prettyJson && opts.prettyJson === true;
+    const objJson = prettyJson ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
     for (const storage of actualStorages) {
         // write object
         writePromises.push(

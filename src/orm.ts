@@ -44,7 +44,8 @@ import { search } from "./search.js";
 
 const repo = <T extends MobilettoOrmObject>(
     storages: MobilettoConnection[] | MobilettoOrmStorageResolver,
-    typeDefOrConfig: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef
+    typeDefOrConfig: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef,
+    opts?: MobilettoOrmRepositoryOptions
 ): MobilettoOrmRepository<T> => {
     const typeDef: MobilettoOrmTypeDef =
         typeDefOrConfig instanceof MobilettoOrmTypeDef ? typeDefOrConfig : new MobilettoOrmTypeDef(typeDefOrConfig);
@@ -76,7 +77,7 @@ const repo = <T extends MobilettoOrmObject>(
             await validateIndexes<T>(this, obj, errors);
 
             obj._meta = typeDef.newMeta(id);
-            return (await verifyWrite(repository, storages, typeDef, id, obj)) as T;
+            return (await verifyWrite(repository, storages, typeDef, id, obj, opts)) as T;
         },
         async update(editedThing: T): Promise<T> {
             const id = typeDef.id(editedThing);
@@ -110,7 +111,7 @@ const repo = <T extends MobilettoOrmObject>(
                 obj._meta.mtime = now;
             }
             const toWrite = Object.assign({}, found, obj);
-            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite, found)) as T;
+            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite, opts, found)) as T;
         },
         async remove(thingToRemove: MobilettoOrmIdArg): Promise<MobilettoOrmObject> {
             if (typeof thingToRemove === "string" || !thingToRemove?._meta?.version) {
@@ -126,7 +127,7 @@ const repo = <T extends MobilettoOrmObject>(
 
             const tombstone = typeDef.tombstone(found);
             return typeDef.redact(
-                await verifyWrite(repository, storages, typeDef, typeDef.id(found), tombstone, found)
+                await verifyWrite(repository, storages, typeDef, typeDef.id(found), tombstone, opts, found)
             ) as MobilettoOrmObject;
         },
         async purge(idVal: MobilettoOrmIdArg, opts?: MobilettoOrmPurgeOpts): Promise<MobilettoOrmPurgeResults> {
@@ -590,12 +591,17 @@ const repo = <T extends MobilettoOrmObject>(
     return repository;
 };
 
+export type MobilettoOrmRepositoryOptions = {
+    prettyJson: boolean;
+};
+
 export const repositoryFactory = (
-    storages: MobilettoConnection[] | MobilettoOrmStorageResolver
+    storages: MobilettoConnection[] | MobilettoOrmStorageResolver,
+    opts?: MobilettoOrmRepositoryOptions
 ): MobilettoOrmRepositoryFactory => {
     return {
         storages,
         repository: <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) =>
-            repo<T>(storages, typeDef),
+            repo<T>(storages, typeDef, opts),
     };
 };
