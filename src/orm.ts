@@ -71,7 +71,7 @@ const repo = <T extends MobilettoOrmObject>(
             const errors: MobilettoOrmValidationErrors = {};
             const found = await repository.safeFindById(id);
             if (found != null) {
-                addError(errors, "id", "exists");
+                addError(errors, typeDef.idFieldName(), "exists");
             }
             await validateIndexes<T>(this, obj, errors);
 

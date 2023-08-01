@@ -67,8 +67,11 @@ describe("CRUD test", async () => {
         } catch (e) {
             expect(e).instanceof(MobilettoOrmValidationError, "incorrect exception type");
             expect(Object.keys(e.errors).length).equals(1, "expected one validation error");
-            expect(e.errors["id"].length).equals(1, "expected one id validation error");
-            expect(e.errors["id"][0]).equals("exists", "expected one id.exists validation error");
+            expect(e.errors[test.repo.typeDef.idFieldName()].length).equals(1, "expected one id validation error");
+            expect(e.errors[test.repo.typeDef.idFieldName()][0]).equals(
+                "exists",
+                "expected one id.exists validation error"
+            );
         }
     });
     it("should read the one version (on each storage) of the thing we just created", async () => {
