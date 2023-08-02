@@ -356,26 +356,13 @@ const repo = <T extends MobilettoOrmObject>(
             value: MobilettoOrmFieldValue,
             opts?: MobilettoOrmFindOpts
         ): Promise<T | T[] | null> {
-            const compValue =
-                typeDef.fields &&
-                typeDef.fields[field] &&
-                value &&
-                typeof typeDef.fields[field].normalize === "function"
-                    ? await (typeDef.fields[field].normalize as MobilettoOrmNormalizeFunc)(value)
-                    : value;
-            const idxPath: string = typeDef.indexPath(field, compValue as MobilettoOrmFieldIndexableValue);
-            const first = !!(opts && typeof opts.first === "boolean" && opts.first);
             const removed = !!(opts && opts.removed && opts.removed);
-            const noRedact = !!(opts && opts.noRedact && opts.noRedact) || !typeDef.hasRedactions();
-            const noCollect = !!(opts && opts.noCollect && opts.noCollect) || false;
+            const first = !!(opts && typeof opts.first === "boolean" && opts.first);
             const predicate: MobilettoOrmPredicate | null =
                 opts && typeof opts.predicate === "function" ? opts.predicate : null;
-            const apply: MobilettoOrmApplyFunc | null = opts && typeof opts.apply === "function" ? opts.apply : null;
-            const applyResults: Record<string, unknown> | null =
-                opts && typeof opts.applyResults === "object" ? opts.applyResults : null;
 
             if (typeDef.primary && field === typeDef.primary) {
-                const foundById = (await this.findById(compValue as MobilettoOrmIdArg, opts)) as T;
+                const foundById = (await this.findById(value as MobilettoOrmIdArg, opts)) as T;
                 if (!removed && typeDef.isTombstone(foundById)) {
                     return first ? null : [];
                 }
@@ -385,6 +372,20 @@ const repo = <T extends MobilettoOrmObject>(
                 const maybeRedacted: T = await redactAndApply<T>(typeDef, foundById, opts);
                 return first ? maybeRedacted : [maybeRedacted];
             }
+
+            const compValue =
+                typeDef.fields &&
+                typeDef.fields[field] &&
+                value &&
+                typeof typeDef.fields[field].normalize === "function"
+                    ? await (typeDef.fields[field].normalize as MobilettoOrmNormalizeFunc)(value)
+                    : value;
+            const idxPath: string = typeDef.indexPath(field, compValue as MobilettoOrmFieldIndexableValue);
+            const noRedact = !!(opts && opts.noRedact && opts.noRedact) || !typeDef.hasRedactions();
+            const noCollect = !!(opts && opts.noCollect && opts.noCollect) || false;
+            const apply: MobilettoOrmApplyFunc | null = opts && typeof opts.apply === "function" ? opts.apply : null;
+            const applyResults: Record<string, unknown> | null =
+                opts && typeof opts.applyResults === "object" ? opts.applyResults : null;
 
             // read all things concurrently
             const storagePromises: Promise<string>[] = [];

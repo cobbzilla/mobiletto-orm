@@ -1,6 +1,7 @@
 import { describe, before, it } from "mocha";
 import { expect, assert } from "chai";
 import {
+    FIND_FIRST,
     MobilettoOrmError,
     MobilettoOrmNotFoundError,
     MobilettoOrmSyncError,
@@ -376,5 +377,10 @@ describe("Primary test", async () => {
             test.newThing._meta.id,
             "expected newThing.id to be the same as newThing.name"
         );
+    });
+    it("finds a thing by primary field", async () => {
+        const found = await test.repo.findBy("name", test.newThing.name, FIND_FIRST);
+        expect(found).is.not.null;
+        expect(found?._meta?.id).eq(test.newThing._meta.id);
     });
 });
