@@ -68,13 +68,16 @@ export const initFactory = (done) => {
         .finally(() => done());
 };
 
-export const initStorage = (done, typeDefConfig) => {
+export const initStorage = (done, typeDefConfig, anotherTypeDefConfig) => {
     initTest(test);
     getStorages()
         .then((stores) => {
             test.storages = stores;
             test.factory = repositoryFactory(test.storages);
             test.repo = test.factory.repository(typeDefConfig);
+            if (anotherTypeDefConfig) {
+                test.repo2 = test.factory.repository(anotherTypeDefConfig);
+            }
         })
         .catch((e) => {
             console.error(`initStorage error: ${e}`);

@@ -1,14 +1,16 @@
 import path from "path";
-import { logger, MobilettoConnection, MobilettoMetadata } from "mobiletto-base";
+import { logger, MobilettoConnection, MobilettoMetadata, rand } from "mobiletto-base";
 import {
     FIND_FIRST,
     FIND_ALL,
     MobilettoOrmApplyFunc,
     MobilettoOrmFindOpts,
+    MobilettoOrmTypeDefConfig,
     MobilettoOrmTypeDef,
+    MobilettoOrmTypeDefRegistry,
+    MobilettoOrmRefResolver,
     MobilettoOrmSyncError,
     MobilettoOrmNotFoundError,
-    MobilettoOrmTypeDefConfig,
     MobilettoOrmObject,
     MobilettoOrmIdArg,
     MobilettoOrmError,
@@ -593,16 +595,32 @@ const repo = <T extends MobilettoOrmObject>(
 };
 
 export type MobilettoOrmRepositoryOptions = {
-    prettyJson: boolean;
+    prettyJson?: boolean;
+    registryName?: string;
 };
+
+const ormResolver =
+    <T extends MobilettoOrmObject>(repo: MobilettoOrmRepository<T>): MobilettoOrmRefResolver =>
+    async (id: MobilettoOrmIdArg): Promise<T> =>
+        repo.findById(id);
 
 export const repositoryFactory = (
     storages: MobilettoConnection[] | MobilettoOrmStorageResolver,
     opts?: MobilettoOrmRepositoryOptions
 ): MobilettoOrmRepositoryFactory => {
+    const registry = new MobilettoOrmTypeDefRegistry({
+        name: opts?.registryName ? opts.registryName : `MobilettoOrmTypeDefRegistry@${rand(8)}`,
+    });
     return {
         storages,
-        repository: <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) =>
-            repo<T>(storages, typeDef, opts),
+        repository: <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) => {
+            if (!typeDef.typeName) {
+                throw new MobilettoOrmError("typeDef.name is required");
+            }
+            typeDef.registry = registry;
+            const rp = repo<T>(storages, typeDef, opts);
+            registry.register(typeDef.typeName, ormResolver<T>(rp));
+            return rp;
+        },
     };
 };
