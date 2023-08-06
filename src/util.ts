@@ -58,9 +58,10 @@ export const safeParseVersion = <T extends MobilettoOrmObject>(
 export const findVersion = async <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,
     id: MobilettoOrmIdArg,
-    current?: MobilettoOrmIdArg
+    current?: MobilettoOrmIdArg,
+    opts?: MobilettoOrmFindOpts
 ): Promise<T> => {
-    const found = (await repository.findById(id)) as T;
+    const found = (await repository.findById(id, opts)) as T;
     const foundVersion = found._meta?.version;
     const expectedVersion = current
         ? safeParseVersion(repository, current, `'error: no version detected in ${current}'`)

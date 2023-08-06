@@ -24,6 +24,8 @@ import {
     MobilettoOrmPurgeResults,
     MobilettoOrmFieldValue,
     MobilettoOrmFieldIndexableValue,
+    FIND_NOREDACT,
+    mergeDeep,
 } from "mobiletto-orm-typedef";
 import {
     MobilettoOrmMetadata,
@@ -91,7 +93,7 @@ const repo = <T extends MobilettoOrmObject>(
             }
 
             // does thing with PK exist? if not, error
-            const found = await findVersion(repository, id, editedThing?._meta?.version);
+            const found = await findVersion(repository, id, editedThing?._meta?.version, FIND_NOREDACT);
             if (!found._meta) {
                 throw new MobilettoOrmError("update: findVersion returned object without _meta");
             }
@@ -106,13 +108,10 @@ const repo = <T extends MobilettoOrmObject>(
             obj._meta.version = typeDef.newVersion();
 
             const now = Date.now();
-            if (typeof obj._meta.ctime !== "number" || obj._meta.ctime < 0) {
-                obj._meta.ctime = now;
-            }
-            if (typeof obj.mtime !== "number" || obj.mtime < obj.ctime) {
-                obj._meta.mtime = now;
-            }
-            const toWrite = Object.assign({}, found, obj);
+            obj._meta.ctime = found._meta.ctime;
+            obj._meta.mtime = now;
+
+            const toWrite = mergeDeep({}, found, obj);
             return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite, opts, found)) as T;
         },
         async remove(thingToRemove: MobilettoOrmIdArg): Promise<MobilettoOrmObject> {
