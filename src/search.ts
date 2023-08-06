@@ -83,14 +83,15 @@ export const search = async <T extends MobilettoOrmObject>(
                                                                     typeDef.id(maybeRedacted)
                                                                 ] = maybeRedacted;
                                                             }
-                                                            resolve2();
                                                         })
                                                         .catch((e4: Error) => {
                                                             if (logger.isWarnEnabled()) {
                                                                 logger.warn(`find: findById(${idHash}): ${e4}`);
                                                             }
-                                                            resolve2();
-                                                        });
+                                                        })
+                                                        .finally(resolve2);
+                                                } else {
+                                                    resolve2();
                                                 }
                                             } else {
                                                 resolve2();
