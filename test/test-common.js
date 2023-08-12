@@ -12,14 +12,17 @@ registerDriver("local", localDriver);
 export const storageConfigs = () => {
     return {
         local_1: {
-            // key: `mobiletto-orm-test1_${rand()}`,
-            // opts: { indexedDB },
+            // indexeddb_1: {
+            //     key: `mobiletto-orm-test1_${rand()}`,
+            //     opts: { indexedDB },
             key: `/tmp/mobiletto-orm-test1_${rand()}`,
             opts: { createIfNotExist: true },
+            // encryption: { key: rand(32) },
         },
         local_2: {
             key: `/tmp/mobiletto-orm-test2_${rand()}`,
             opts: { createIfNotExist: true },
+            // encryption: { key: rand(32) },
         },
     };
 };
@@ -31,9 +34,13 @@ export const getStorages = async () => {
         const driverType = storageName.substring(0, storageName.indexOf("_"));
         const config = newConfigs[storageName];
         const dbName = config.key;
-        const storage = await mobiletto(driverType, dbName, "", config.opts);
-        storage.name = storageName;
-        storages.push(storage);
+        try {
+            const storage = await mobiletto(driverType, dbName, "", config.opts, config.encryption);
+            storage.name = storageName;
+            storages.push(storage);
+        } catch (e) {
+            throw new Error(`getStorages: error creating storage ${driverType}:${dbName}: ${e}`);
+        }
     }
     return storages;
 };

@@ -142,7 +142,7 @@ const repo = <T extends MobilettoOrmObject>(
             }
             const objPath = typeDef.generalPath(id);
             const deletePromises = [];
-            for (const storage of await resolveStorages(storages)) {
+            for (const storage of await resolveStorages(storages, typeDef.scope)) {
                 deletePromises.push(
                     new Promise<MobilettoOrmPurgeResult>((resolve, reject) => {
                         storage
@@ -186,7 +186,7 @@ const repo = <T extends MobilettoOrmObject>(
             const noRedact = !!(opts && opts.noRedact && opts.noRedact === true) || !typeDef.hasRedactions();
 
             // read current version from each storage
-            for (const storage of await resolveStorages(storages)) {
+            for (const storage of await resolveStorages(storages, typeDef.scope)) {
                 listPromises.push(
                     new Promise<void>((resolve) => {
                         // try {
@@ -325,7 +325,7 @@ const repo = <T extends MobilettoOrmObject>(
             const foundById: Record<string, T | null> = {};
 
             // read all things concurrently
-            for (const storage of await resolveStorages(storages)) {
+            for (const storage of await resolveStorages(storages, typeDef.scope)) {
                 promises.push(
                     search(
                         repository,
@@ -394,7 +394,7 @@ const repo = <T extends MobilettoOrmObject>(
             const storagePromises: Promise<string>[] = [];
             const found: Record<string, T | null> = {};
             const addedAnything: MobilettoFoundMarker = { found: false };
-            for (const storage of await resolveStorages(storages)) {
+            for (const storage of await resolveStorages(storages, typeDef.scope)) {
                 const logPrefix = `[1] storage(${storage.name}):`;
                 if (first && addedAnything.found) {
                     break;
@@ -510,7 +510,7 @@ const repo = <T extends MobilettoOrmObject>(
             const found: Record<string, MobilettoMetadata[]> = {};
 
             // read current version from each storage
-            for (const storage of await resolveStorages(storages)) {
+            for (const storage of await resolveStorages(storages, typeDef.scope)) {
                 storagePromises.push(
                     new Promise<void>((resolve, reject) => {
                         storage

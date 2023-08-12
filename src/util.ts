@@ -12,16 +12,24 @@ import {
     MobilettoOrmPredicate,
     MobilettoOrmValidationError,
     MobilettoOrmValidationErrors,
+    MobilettoOrmTypeDefScope,
 } from "mobiletto-orm-typedef";
 import { MobilettoOrmRepository, MobilettoOrmStorageResolver } from "./types.js";
 import { MobilettoOrmRepositoryOptions } from "./orm";
 
 export const resolveStorages = async (
-    stores: MobilettoConnection[] | MobilettoOrmStorageResolver
+    stores: MobilettoConnection[] | MobilettoOrmStorageResolver,
+    scope: MobilettoOrmTypeDefScope
 ): Promise<MobilettoConnection[]> => {
-    if (Array.isArray(stores)) return stores;
-    if (typeof stores === "function") return await stores();
-    throw new MobilettoOrmError(`resolveStorages: stores was neither an array nor a function. stores=${stores}`);
+    const resolved = Array.isArray(stores) ? stores : typeof stores === "function" ? await stores() : null;
+    if (resolved == null) {
+        throw new MobilettoOrmError(`resolveStorages: stores was neither an array nor a function. stores=${stores}`);
+    }
+    const scoped = scope === "any" ? resolved : resolved.filter((s) => s.info().scope === scope);
+    if (scoped.length === 0) {
+        throw new MobilettoOrmError(`resolveStorages: none of the ${resolved.length} stores has scope=${scope}`);
+    }
+    return scoped;
 };
 
 export const parseVersion = <T extends MobilettoOrmObject>(
@@ -91,7 +99,7 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
 ) => {
     const writePromises: Promise<number | string | string[] | Error>[] = [];
     const writeSuccesses: boolean[] = [];
-    const actualStorages = await resolveStorages(storages);
+    const actualStorages = await resolveStorages(storages, typeDef.scope);
     const expectedSuccessCount = typeDef.minWrites < 0 ? actualStorages.length : typeDef.minWrites;
     const objPath = typeDef.specificPath(obj);
     const prettyJson = opts && opts.prettyJson && opts.prettyJson === true;
