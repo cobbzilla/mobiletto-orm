@@ -47,6 +47,7 @@ import {
 import { search } from "./search.js";
 
 const repo = <T extends MobilettoOrmObject>(
+    factory: MobilettoOrmRepositoryFactory,
     storages: MobilettoConnection[] | MobilettoOrmStorageResolver,
     typeDefOrConfig: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef,
     opts?: MobilettoOrmRepositoryOptions
@@ -55,6 +56,7 @@ const repo = <T extends MobilettoOrmObject>(
         typeDefOrConfig instanceof MobilettoOrmTypeDef ? typeDefOrConfig : new MobilettoOrmTypeDef(typeDefOrConfig);
     const repository: MobilettoOrmRepository<T> = {
         typeDef,
+        factory,
         async validate(thing: T, current?: T): Promise<T> {
             return (await typeDef.validate(thing, current)) as T;
         },
@@ -610,16 +612,15 @@ export const repositoryFactory = (
     const registry = new MobilettoOrmTypeDefRegistry({
         name: opts?.registryName ? opts.registryName : `MobilettoOrmTypeDefRegistry@${rand(8)}`,
     });
-    return {
-        storages,
-        repository: <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) => {
-            if (!typeDef.typeName) {
-                throw new MobilettoOrmError("typeDef.name is required");
-            }
-            typeDef.registry = registry;
-            const rp = repo<T>(storages, typeDef, opts);
-            registry.register(typeDef.typeName, ormResolver<T>(rp));
-            return rp;
-        },
+    const factory: MobilettoOrmRepositoryFactory = { storages } as MobilettoOrmRepositoryFactory;
+    factory.repository = <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDefConfig | MobilettoOrmTypeDef) => {
+        if (!typeDef.typeName) {
+            throw new MobilettoOrmError("typeDef.name is required");
+        }
+        typeDef.registry = registry;
+        const rp = repo<T>(factory, storages, typeDef, opts);
+        registry.register(typeDef.typeName, ormResolver<T>(rp));
+        return rp;
     };
+    return factory;
 };

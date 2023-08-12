@@ -27,6 +27,7 @@ export type MobilettoOrmMetadata = MobilettoMetadata & {
 
 export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
     typeDef: MobilettoOrmTypeDef;
+    factory: MobilettoOrmRepositoryFactory;
     id: (thing: T) => string | null;
     idField: (thing: T) => string | null;
     validate: (thing: T, current?: T) => Promise<T>;
