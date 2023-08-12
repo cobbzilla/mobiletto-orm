@@ -51,7 +51,7 @@ export const search = async <T extends MobilettoOrmObject>(
                                 resolve();
                             })
                             .catch((e4: Error) => {
-                                if (logger.isWarnEnabled()) {
+                                if (logger.isWarningEnabled()) {
                                     logger.warn(`find: ${e4}`);
                                 }
                                 resolve();
@@ -85,7 +85,7 @@ export const search = async <T extends MobilettoOrmObject>(
                                                             }
                                                         })
                                                         .catch((e4: Error) => {
-                                                            if (logger.isWarnEnabled()) {
+                                                            if (logger.isWarningEnabled()) {
                                                                 logger.warn(`find: findById(${idHash}): ${e4}`);
                                                             }
                                                         })
@@ -98,7 +98,7 @@ export const search = async <T extends MobilettoOrmObject>(
                                             }
                                         })
                                         .catch((e3: Error) => {
-                                            if (logger.isWarnEnabled()) {
+                                            if (logger.isWarningEnabled()) {
                                                 logger.warn(`find: findById(${idHash}): ${e3}`);
                                             }
                                             resolve2();
@@ -112,7 +112,7 @@ export const search = async <T extends MobilettoOrmObject>(
                             resolve();
                         })
                         .catch((e4: Error) => {
-                            if (logger.isWarnEnabled()) {
+                            if (logger.isWarningEnabled()) {
                                 logger.warn(`find: ${e4}`);
                             }
                             resolve();
@@ -120,7 +120,7 @@ export const search = async <T extends MobilettoOrmObject>(
                 }
             })
             .catch((e2: Error) => {
-                if (logger.isWarnEnabled()) {
+                if (logger.isWarningEnabled()) {
                     logger.warn(`find: safeList(${searchPath}): ${e2}`);
                 }
                 resolve();

@@ -275,7 +275,7 @@ const repo = <T extends MobilettoOrmObject>(
                             try {
                                 resolve(f.storage.writeFile(newestPath, newestJson));
                             } catch (e) {
-                                if (logger.isWarnEnabled()) {
+                                if (logger.isWarningEnabled()) {
                                     logger.warn(
                                         `findById: storage[${f.storage.name}].writeFile(${newestPath}) failed: ${e}`
                                     );
@@ -292,7 +292,7 @@ const repo = <T extends MobilettoOrmObject>(
                         try {
                             resolve(missing.writeFile(newestPath, newestJson));
                         } catch (e) {
-                            if (logger.isWarnEnabled()) {
+                            if (logger.isWarningEnabled()) {
                                 logger.warn(`findById: storage[${missing.name}].writeFile(${newestPath}) failed: ${e}`);
                             }
                             resolve();
@@ -303,7 +303,7 @@ const repo = <T extends MobilettoOrmObject>(
             try {
                 await Promise.all(syncPromises);
             } catch (e) {
-                if (logger.isWarnEnabled()) {
+                if (logger.isWarningEnabled()) {
                     logger.warn(`findById: error resolving syncPromises: ${e}`);
                 }
             }
@@ -345,7 +345,7 @@ const repo = <T extends MobilettoOrmObject>(
             await Promise.all(promises);
             const resolved = await Promise.all(promises);
             if (resolved.length !== promises.length) {
-                if (logger.isWarnEnabled()) {
+                if (logger.isWarningEnabled()) {
                     logger.warn(`find: ${resolved} of ${promises.length} promises resolved`);
                 }
             }
@@ -450,7 +450,7 @@ const repo = <T extends MobilettoOrmObject>(
                                         });
                                 })
                                 .catch((e: Error) => {
-                                    if (logger.isWarnEnabled()) {
+                                    if (logger.isWarningEnabled()) {
                                         logger.warn(`findBy(${field}, ${value}) error: ${e}`);
                                     }
                                     resolve(`${logPrefix} Resolving to error: ${e}`);
@@ -476,7 +476,7 @@ const repo = <T extends MobilettoOrmObject>(
             try {
                 return await this.findBy(field, value, opts);
             } catch (e) {
-                if (logger.isWarnEnabled()) {
+                if (logger.isWarningEnabled()) {
                     logger.warn(`safeFindBy(${field}) threw ${e}`);
                 }
                 return first ? null : [];
@@ -491,7 +491,7 @@ const repo = <T extends MobilettoOrmObject>(
                 const found = await this.safeFindBy(field, value, Object.assign({}, FIND_FIRST, opts || {}));
                 return found ? (found as T) : null;
             } catch (e) {
-                if (logger.isWarnEnabled()) {
+                if (logger.isWarningEnabled()) {
                     logger.warn(`safeFindBy(${field}) threw ${e}`);
                 }
                 return null;
@@ -547,7 +547,7 @@ const repo = <T extends MobilettoOrmObject>(
                                                             resolve2(f);
                                                         })
                                                         .catch((e2: Error) => {
-                                                            if (logger.isWarnEnabled()) {
+                                                            if (logger.isWarningEnabled()) {
                                                                 logger.warn(
                                                                     `findVersionsById(${id}): safeReadFile error ${e2}`
                                                                 );

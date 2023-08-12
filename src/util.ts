@@ -120,12 +120,12 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                         } else {
                             const message = `verifyWrite(${id}): expected to write ${objJson.length} bytes but wrote ${bytesWritten}`;
                             const fail = new MobilettoOrmSyncError(id, message);
-                            if (logger.isWarnEnabled()) logger.warn(message);
+                            if (logger.isWarningEnabled()) logger.warn(message);
                             resolve(fail);
                         }
                     })
                     .catch((e: Error) => {
-                        if (logger.isWarnEnabled()) logger.warn(`verifyWrite(${id}): error: ${JSON.stringify(e)}`);
+                        if (logger.isWarningEnabled()) logger.warn(`verifyWrite(${id}): error: ${JSON.stringify(e)}`);
                         resolve(e);
                     });
             })
@@ -146,7 +146,7 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                         .remove(idxPath)
                         .then((result: string | string[]) => resolve(result))
                         .catch((e: Error) => {
-                            if (logger.isWarnEnabled()) {
+                            if (logger.isWarningEnabled()) {
                                 logger.warn(
                                     `verifyWrite(${id}, index=${idxPath}, delete): error: ${JSON.stringify(e)}`
                                 );
@@ -169,7 +169,7 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                                 resolve(idxPath);
                             })
                             .catch((e: Error) => {
-                                if (logger.isWarnEnabled()) {
+                                if (logger.isWarningEnabled()) {
                                     logger.warn(
                                         `verifyWrite(${id}, index=${idxPath}, create): error: ${JSON.stringify(e)}`
                                     );
@@ -213,7 +213,7 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                         }
                         confirmedWrites.push(storageName);
                     } else {
-                        if (logger.isWarnEnabled()) {
+                        if (logger.isWarningEnabled()) {
                             logger.warn(`verifyWrite(${id}): failedWrite to ${storageName}`);
                         }
                     }
@@ -226,14 +226,14 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                 );
             }
         } catch (e) {
-            if (logger.isWarnEnabled()) {
+            if (logger.isWarningEnabled()) {
                 logger.warn(`verifyWrite(${id}) error confirming writes via read: ${JSON.stringify(e)}`);
             }
             failure = new MobilettoOrmSyncError(id, JSON.stringify(e));
         }
     }
     if (failure != null) {
-        if (logger.isWarnEnabled()) {
+        if (logger.isWarningEnabled()) {
             logger.warn(`verifyWrite(${id}) error confirming writes via read: ${JSON.stringify(failure)}`);
         }
         for (const storage of actualStorages) {
@@ -298,7 +298,7 @@ export const promiseFindById = <T extends MobilettoOrmObject>(
                 }
             })
             .catch((e2) => {
-                if (logger.isWarnEnabled()) {
+                if (logger.isWarningEnabled()) {
                     logger.warn(`${logPrefix} error: ${e2}`);
                 }
                 resolve(`${logPrefix} resolving as error: ${e2}`);
