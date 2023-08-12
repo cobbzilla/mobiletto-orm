@@ -15,7 +15,7 @@ import {
     MobilettoOrmTypeDefScope,
 } from "mobiletto-orm-typedef";
 import { MobilettoOrmRepository, MobilettoOrmStorageResolver } from "./types.js";
-import { MobilettoOrmRepositoryOptions } from "./orm";
+import { MobilettoOrmRepositoryOptions } from "./orm.js";
 
 export const resolveStorages = async (
     stores: MobilettoConnection[] | MobilettoOrmStorageResolver,

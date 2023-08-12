@@ -1,7 +1,7 @@
 import { MobilettoConnection } from "mobiletto-base";
 import { MobilettoOrmIdArg, MobilettoOrmObject, MobilettoOrmTypeDef, MobilettoOrmApplyFunc, MobilettoOrmFindOpts, MobilettoOrmPredicate, MobilettoOrmValidationErrors, MobilettoOrmTypeDefScope } from "mobiletto-orm-typedef";
 import { MobilettoOrmRepository, MobilettoOrmStorageResolver } from "./types.js";
-import { MobilettoOrmRepositoryOptions } from "./orm";
+import { MobilettoOrmRepositoryOptions } from "./orm.js";
 export declare const resolveStorages: (stores: MobilettoConnection[] | MobilettoOrmStorageResolver, scope: MobilettoOrmTypeDefScope) => Promise<MobilettoConnection[]>;
 export declare const parseVersion: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, current: MobilettoOrmIdArg) => string;
 export declare const safeParseVersion: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, current: MobilettoOrmIdArg, defaultValue: string) => string;
