@@ -1,6 +1,6 @@
 {
   "name": "mobiletto-orm",
-  "version": "2.2.29",
+  "version": "2.2.30",
   "type": "module",
   "description": "mobiletto object-relational-mapper (ORM)",
   "keywords": [
@@ -52,7 +52,7 @@
     "mobiletto-base": "^2.1.0",
     "mobiletto-driver-indexeddb": "^2.0.19",
     "mobiletto-driver-local": "^2.0.13",
-    "mobiletto-orm-typedef": "^2.3.30",
+    "mobiletto-orm-typedef": "^2.3.31",
     "mocha": "^10.2.0",
     "prettier": "^2.8.8",
     "tslint-config-prettier": "^1.18.0",
