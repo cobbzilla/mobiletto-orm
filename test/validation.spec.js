@@ -41,9 +41,12 @@ const typeDefConfig = {
             values: [1, 2, 3],
         },
         multiselect: {
-            type: "array",
+            // type: "array",
             control: "multi",
             values: ["option-1", "option-2", "option-3", "option-4"],
+        },
+        multistring: {
+            type: "string[]",
         },
     },
 };
@@ -66,8 +69,10 @@ describe("validation test", async () => {
         expect(fieldDefs["impliedBoolean"].control).eq("flag");
         expect(fieldDefs["restricted"].type).eq("number");
         expect(fieldDefs["restricted"].control).eq("select");
-        expect(fieldDefs["multiselect"].type).eq("array");
+        expect(fieldDefs["multiselect"].type).eq("string[]");
         expect(fieldDefs["multiselect"].control).eq("multi");
+        expect(fieldDefs["multistring"].type).eq("string[]");
+        expect(fieldDefs["multistring"].control).eq("text");
     });
     it("typeDef.tabIndexes returns the field names in the correct order", async () => {
         const ti = test.repo.typeDef.tabIndexes;
@@ -232,6 +237,7 @@ describe("validation test", async () => {
             alphaOnly: ALPHA_STRING,
             comments,
             multiselect: ["option-2", "option-3"],
+            multistring: ["x", "y", "zzz"],
         });
         expect(test.newThing.int).eq(100);
         expect(test.newThing.comments).eq(comments);
@@ -242,6 +248,9 @@ describe("validation test", async () => {
         expect(test.newThing.multiselect.length).eq(2);
         expect(test.newThing.multiselect[0]).eq("option-2");
         expect(test.newThing.multiselect[1]).eq("option-3");
+        expect(test.newThing.multistring[0]).eq("x");
+        expect(test.newThing.multistring[1]).eq("y");
+        expect(test.newThing.multistring[2]).eq("zzz");
     });
     it("successfully finds the object we created, and redacted fields are null", async () => {
         const found = await test.repo.findById(test.newThing._meta.id);

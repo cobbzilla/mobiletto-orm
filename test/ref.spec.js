@@ -19,7 +19,7 @@ const employeeTypeDefConfig = {
             primary: true,
         },
         departments: {
-            type: "array",
+            type: "string[]",
             control: "multi",
             required: true,
             ref: {
