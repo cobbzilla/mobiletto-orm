@@ -383,7 +383,7 @@ const repo = <T extends MobilettoOrmObject>(
                 typeof typeDef.fields[field].normalize === "function"
                     ? await (typeDef.fields[field].normalize as MobilettoOrmNormalizeFunc)(value)
                     : value;
-            const idxPath: string = typeDef.indexPath(field, compValue as MobilettoOrmFieldIndexableValue);
+            const idxPaths: string[] = typeDef.indexPaths(field, compValue as MobilettoOrmFieldIndexableValue);
             const noRedact = !!(opts && opts.noRedact && opts.noRedact) || !typeDef.hasRedactions();
             const noCollect = !!(opts && opts.noCollect && opts.noCollect) || false;
             const apply: MobilettoOrmApplyFunc | null = opts && typeof opts.apply === "function" ? opts.apply : null;
@@ -399,65 +399,67 @@ const repo = <T extends MobilettoOrmObject>(
                 if (first && addedAnything.found) {
                     break;
                 }
-                storagePromises.push(
-                    new Promise<string>((resolve) => {
-                        if (first && addedAnything.found) {
-                            resolve(`[1] storage(${storage.name}): already found, resolving`);
-                        } else {
-                            const indexLevels = typeDef.fields[field].indexLevels || DEFAULT_FIELD_INDEX_LEVELS;
-                            storage
-                                .safeList(idxPath, { recursive: indexLevels > 0 })
-                                .then((indexEntries: MobilettoMetadata[]) => {
-                                    const findByIdPromises: Promise<string>[] = [];
-                                    for (const entry of indexEntries) {
-                                        if (first && addedAnything.found) {
-                                            resolve(`${logPrefix} (after listing) already found, resolving`);
-                                            break;
+                for (const idxPath of idxPaths) {
+                    storagePromises.push(
+                        new Promise<string>((resolve) => {
+                            if (first && addedAnything.found) {
+                                resolve(`[1] storage(${storage.name}): already found, resolving`);
+                            } else {
+                                const indexLevels = typeDef.fields[field].indexLevels || DEFAULT_FIELD_INDEX_LEVELS;
+                                storage
+                                    .safeList(idxPath, { recursive: indexLevels > 0 })
+                                    .then((indexEntries: MobilettoMetadata[]) => {
+                                        const findByIdPromises: Promise<string>[] = [];
+                                        for (const entry of indexEntries) {
+                                            if (first && addedAnything.found) {
+                                                resolve(`${logPrefix} (after listing) already found, resolving`);
+                                                break;
+                                            }
+                                            const id = typeDef.idFromPath(entry.name);
+                                            if (typeof found[id] === "undefined") {
+                                                found[id] = null;
+                                                findByIdPromises.push(
+                                                    promiseFindById(
+                                                        repository,
+                                                        storage,
+                                                        field,
+                                                        value,
+                                                        id,
+                                                        first,
+                                                        removed,
+                                                        noRedact,
+                                                        predicate,
+                                                        apply,
+                                                        applyResults,
+                                                        noCollect,
+                                                        found,
+                                                        addedAnything
+                                                    )
+                                                );
+                                            }
                                         }
-                                        const id = typeDef.idFromPath(entry.name);
-                                        if (typeof found[id] === "undefined") {
-                                            found[id] = null;
-                                            findByIdPromises.push(
-                                                promiseFindById(
-                                                    repository,
-                                                    storage,
-                                                    field,
-                                                    value,
-                                                    id,
-                                                    first,
-                                                    removed,
-                                                    noRedact,
-                                                    predicate,
-                                                    apply,
-                                                    applyResults,
-                                                    noCollect,
-                                                    found,
-                                                    addedAnything
-                                                )
-                                            );
+                                        Promise.all(findByIdPromises)
+                                            .then(() => {
+                                                resolve(
+                                                    `${logPrefix} resolved ${
+                                                        findByIdPromises.length
+                                                    } findByIdPromises: ${JSON.stringify(findByIdPromises)}`
+                                                );
+                                            })
+                                            .catch((findErr: Error) => {
+                                                `${logPrefix} error resolving ${findByIdPromises.length} findByIdPromises: ${findErr}`;
+                                            });
+                                    })
+                                    .catch((e: Error) => {
+                                        if (logger.isWarningEnabled()) {
+                                            logger.warn(`findBy(${field}, ${value}) error: ${e}`);
                                         }
-                                    }
-                                    Promise.all(findByIdPromises)
-                                        .then(() => {
-                                            resolve(
-                                                `${logPrefix} resolved ${
-                                                    findByIdPromises.length
-                                                } findByIdPromises: ${JSON.stringify(findByIdPromises)}`
-                                            );
-                                        })
-                                        .catch((findErr: Error) => {
-                                            `${logPrefix} error resolving ${findByIdPromises.length} findByIdPromises: ${findErr}`;
-                                        });
-                                })
-                                .catch((e: Error) => {
-                                    if (logger.isWarningEnabled()) {
-                                        logger.warn(`findBy(${field}, ${value}) error: ${e}`);
-                                    }
-                                    resolve(`${logPrefix} Resolving to error: ${e}`);
-                                });
-                        }
-                    })
-                );
+                                        resolve(`${logPrefix} Resolving to error: ${e}`);
+                                    });
+                            }
+                        })
+                    );
+                }
             }
             const results = await Promise.all(storagePromises);
             logger.info(`findBy promise results = ${JSON.stringify(results)}`);

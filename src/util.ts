@@ -140,45 +140,49 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                 (typeDef.isTombstone(obj) ||
                     (typeof previous[fieldName] !== "undefined" && previous[fieldName] != null))
             ) {
-                const idxPath = typeDef.indexSpecificPath(fieldName, previous);
-                const indexPromise = new Promise<string | string[] | Error>((resolve) => {
-                    storage
-                        .remove(idxPath)
-                        .then((result: string | string[]) => resolve(result))
-                        .catch((e: Error) => {
-                            if (logger.isWarningEnabled()) {
-                                logger.warn(
-                                    `verifyWrite(${id}, index=${idxPath}, delete): error: ${JSON.stringify(e)}`
-                                );
-                            }
-                            resolve(e);
-                        });
-                });
-                writePromises.push(indexPromise);
-            }
-            // Create new indexes if:
-            // 1. not a removal AND
-            // 2. obj has value for field
-            if (!typeDef.isTombstone(obj) && typeof obj[fieldName] !== "undefined" && obj[fieldName] != null) {
-                const idxPath = typeDef.indexSpecificPath(fieldName, obj);
-                const indexPromise = new Promise<string | Error>((resolve) => {
-                    storage.safeMetadata(idxPath).then(() => {
+                const idxPaths = typeDef.indexSpecificPaths(fieldName, previous);
+                for (const idxPath of idxPaths) {
+                    const indexPromise = new Promise<string | string[] | Error>((resolve) => {
                         storage
-                            .writeFile(idxPath, "")
-                            .then(() => {
-                                resolve(idxPath);
-                            })
+                            .remove(idxPath)
+                            .then((result: string | string[]) => resolve(result))
                             .catch((e: Error) => {
                                 if (logger.isWarningEnabled()) {
                                     logger.warn(
-                                        `verifyWrite(${id}, index=${idxPath}, create): error: ${JSON.stringify(e)}`
+                                        `verifyWrite(${id}, index=${idxPath}, delete): error: ${JSON.stringify(e)}`
                                     );
                                 }
                                 resolve(e);
                             });
                     });
-                });
-                writePromises.push(indexPromise);
+                    writePromises.push(indexPromise);
+                }
+            }
+            // Create new indexes if:
+            // 1. not a removal AND
+            // 2. obj has value for field
+            if (!typeDef.isTombstone(obj) && typeof obj[fieldName] !== "undefined" && obj[fieldName] != null) {
+                const idxPaths = typeDef.indexSpecificPaths(fieldName, obj);
+                for (const idxPath of idxPaths) {
+                    const indexPromise = new Promise<string | Error>((resolve) => {
+                        storage.safeMetadata(idxPath).then(() => {
+                            storage
+                                .writeFile(idxPath, "")
+                                .then(() => {
+                                    resolve(idxPath);
+                                })
+                                .catch((e: Error) => {
+                                    if (logger.isWarningEnabled()) {
+                                        logger.warn(
+                                            `verifyWrite(${id}, index=${idxPath}, create): error: ${JSON.stringify(e)}`
+                                        );
+                                    }
+                                    resolve(e);
+                                });
+                        });
+                    });
+                    writePromises.push(indexPromise);
+                }
             }
         }
     }
