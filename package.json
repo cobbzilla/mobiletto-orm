@@ -1,6 +1,6 @@
 {
   "name": "mobiletto-orm",
-  "version": "2.2.35",
+  "version": "2.2.36",
   "type": "module",
   "description": "mobiletto object-relational-mapper (ORM)",
   "keywords": [
@@ -49,9 +49,9 @@
     "eslint": "^8.44.0",
     "eslint-config-prettier": "^8.8.0",
     "fake-indexeddb": "^4.0.1",
-    "mobiletto-base": "^2.1.0",
-    "mobiletto-driver-indexeddb": "^2.0.19",
-    "mobiletto-driver-local": "^2.0.13",
+    "mobiletto-base": "^2.1.1",
+    "mobiletto-driver-indexeddb": "^2.0.20",
+    "mobiletto-driver-local": "^2.0.14",
     "mobiletto-orm-typedef": "^2.4.5",
     "mocha": "^10.2.0",
     "prettier": "^2.8.8",
