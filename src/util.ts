@@ -88,6 +88,9 @@ export const includeRemovedThing = (includeRemoved: boolean, thing: MobilettoOrm
     typeof thing._meta.removed === "undefined" ||
     (typeof thing._meta.removed === "boolean" && thing._meta.removed !== true);
 
+const toJson = (obj: MobilettoOrmObject, prettyJson: boolean) =>
+    prettyJson ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
+
 export const verifyWrite = async <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,
     storages: MobilettoConnection[] | MobilettoOrmStorageResolver,
@@ -100,13 +103,16 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
     const writePromises: Promise<number | string | string[] | Error>[] = [];
     const writeSuccesses: boolean[] = [];
     const actualStorages = await resolveStorages(storages, typeDef.scope);
-    const expectedSuccessCount = typeDef.minWrites < 0 ? actualStorages.length : typeDef.minWrites;
+    const expectedSuccessCount = Math.max(
+        1,
+        typeDef.minWrites <= 0 || typeDef.minWrites > actualStorages.length ? actualStorages.length : typeDef.minWrites
+    );
     const objPath = typeDef.specificPath(obj);
-    const prettyJson = opts && opts.prettyJson && opts.prettyJson === true;
+    const prettyJson = (opts && opts.prettyJson && opts.prettyJson === true) || false;
     typeDef.transientFields.forEach((f) => {
         delete obj[f];
     });
-    const objJson = prettyJson ? JSON.stringify(obj, null, 2) : JSON.stringify(obj);
+    const objJson = toJson(obj, prettyJson);
     for (const storage of actualStorages) {
         // write object
         writePromises.push(
@@ -202,14 +208,14 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
             failedWrites.push(storage.name);
         }
         try {
-            const allVersions = await repository.findVersionsById(id);
+            const allVersions = await repository.findVersionsById(id, false);
             for (const storageName of Object.keys(allVersions)) {
                 if (storageName in allVersions) {
                     const versions = allVersions[storageName];
                     if (
                         versions.length > 0 &&
                         versions[versions.length - 1].object &&
-                        JSON.stringify(versions[versions.length - 1].object) === objJson
+                        toJson(versions[versions.length - 1].object || {}, prettyJson) === objJson
                     ) {
                         const idx = failedWrites.indexOf(storageName);
                         if (idx !== -1) {

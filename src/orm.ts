@@ -506,10 +506,14 @@ const repo = <T extends MobilettoOrmObject>(
                 ((Array.isArray(found) && found.length > 0) || (!Array.isArray(found) && typeof found === "object"))
             );
         },
-        async findVersionsById(id: MobilettoOrmIdArg): Promise<Record<string, MobilettoOrmMetadata[]>> {
+        async findVersionsById(
+            id: MobilettoOrmIdArg,
+            redact?: boolean
+        ): Promise<Record<string, MobilettoOrmMetadata[]>> {
             const objPath = typeDef.generalPath(id);
             const storagePromises: Promise<void>[] = [];
             const found: Record<string, MobilettoMetadata[]> = {};
+            redact = typeof redact === "undefined" || redact;
 
             // read current version from each storage
             for (const storage of await resolveStorages(storages, typeDef.scope)) {
@@ -540,11 +544,13 @@ const repo = <T extends MobilettoOrmObject>(
                                                                     )
                                                                 );
                                                             }
-                                                            if (!typeDef.hasRedactions()) {
+                                                            if (!typeDef.hasRedactions() || !redact) {
                                                                 f.data = data || undefined;
                                                             }
                                                             f.object = data
-                                                                ? typeDef.redact(JSON.parse(data.toString("utf8")))
+                                                                ? redact
+                                                                    ? typeDef.redact(JSON.parse(data.toString("utf8")))
+                                                                    : JSON.parse(data.toString("utf8"))
                                                                 : undefined;
                                                             resolve2(f);
                                                         })
