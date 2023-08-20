@@ -42,8 +42,8 @@ devDependencies:
     specifier: ^2.0.20
     version: 2.0.20
   mobiletto-driver-local:
-    specifier: ^2.0.14
-    version: 2.0.14
+    specifier: ^2.0.15
+    version: 2.0.15
   mobiletto-orm-typedef:
     specifier: ^2.4.5
     version: 2.4.5
@@ -1198,8 +1198,8 @@ packages:
       buffer: 6.0.3
     dev: true
 
-  /mobiletto-driver-local@2.0.14:
-    resolution: {integrity: sha512-VDXyY0nMy2Xb03l5bzcdlIQjBqHvkPpACV1l18Ip9Li9NP8bT9RSXP1IZyrYkxcPDBv8LmzFNCKwiiNKx9b0IQ==}
+  /mobiletto-driver-local@2.0.15:
+    resolution: {integrity: sha512-cpJJj410M9hmGQMLVdMAH2IsTyKxzw2xfuO9xNYu/zPzRl61x85HroAOsyW3QmAVuZxmeH85GGueBubDXisyfw==}
     dev: true
 
   /mobiletto-orm-typedef@2.4.5:
