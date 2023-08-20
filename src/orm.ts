@@ -462,7 +462,7 @@ const repo = <T extends MobilettoOrmObject>(
                 }
             }
             const results = await Promise.all(storagePromises);
-            logger.info(`findBy promise results = ${JSON.stringify(results)}`);
+            if (logger.isDebugEnabled()) logger.debug(`findBy promise results = ${JSON.stringify(results)}`);
             const foundValues: T[] = Object.values(found).filter((v) => v != null) as T[];
             if (first) {
                 return foundValues.length > 0 ? foundValues[0] : null;
