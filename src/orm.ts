@@ -26,6 +26,7 @@ import {
     MobilettoOrmFieldIndexableValue,
     FIND_NOREDACT,
     mergeDeep,
+    fsSafeName,
 } from "mobiletto-orm-typedef";
 import {
     MobilettoOrmMetadata,
@@ -175,9 +176,8 @@ const repo = <T extends MobilettoOrmObject>(
             return resolved;
         },
         async findById(idVal: MobilettoOrmIdArg, opts?: MobilettoOrmFindOpts): Promise<T> {
-            const id = this.resolveId(idVal, "findById");
-
             const idPath = !!(opts && opts.idPath && opts.idPath === true);
+            const id = this.resolveId(idVal, "findById");
             const objPath = idPath ? id : typeDef.generalPath(id);
             const listPromises = [];
             const found: Record<string, MobilettoOrmObjectInstance> = {};
