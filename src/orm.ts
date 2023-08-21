@@ -26,7 +26,6 @@ import {
     MobilettoOrmFieldIndexableValue,
     FIND_NOREDACT,
     mergeDeep,
-    fsSafeName,
 } from "mobiletto-orm-typedef";
 import {
     MobilettoOrmMetadata,
