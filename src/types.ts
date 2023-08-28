@@ -26,6 +26,7 @@ export type MobilettoOrmMetadata = MobilettoMetadata & {
 };
 
 export type MobilettoOrmRepository<T extends MobilettoOrmObject> = {
+    initialize?: () => unknown;
     typeDef: MobilettoOrmTypeDef;
     factory: MobilettoOrmRepositoryFactory;
     id: (thing: T) => string | null;

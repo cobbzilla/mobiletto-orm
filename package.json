@@ -1,6 +1,6 @@
 {
   "name": "mobiletto-orm",
-  "version": "2.2.45",
+  "version": "2.2.46",
   "type": "module",
   "description": "mobiletto object-relational-mapper (ORM)",
   "keywords": [
