@@ -101,7 +101,7 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
     previous?: MobilettoOrmObject
 ) => {
     const writePromises: Promise<number | string | string[] | Error>[] = [];
-    const writeSuccesses: boolean[] = [];
+    const writeSuccesses: string[] = [];
     const actualStorages = await resolveStorages(storages, typeDef.scope);
     const expectedSuccessCount = Math.max(
         1,
@@ -121,7 +121,7 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
                     .writeFile(objPath, objJson)
                     .then((bytesWritten: number) => {
                         if (bytesWritten === objJson.length) {
-                            writeSuccesses.push(true);
+                            writeSuccesses.push(objPath);
                             resolve(bytesWritten);
                         } else {
                             const message = `verifyWrite(${id}): expected to write ${objJson.length} bytes but wrote ${bytesWritten}`;
