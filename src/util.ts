@@ -259,7 +259,6 @@ export type MobilettoFoundMarker = { found: boolean };
 export const promiseFindById = <T extends MobilettoOrmObject>(
     repository: MobilettoOrmRepository<T>,
     storage: MobilettoConnection,
-    field: string,
     id: string,
     first: boolean,
     removed: boolean,
@@ -272,7 +271,7 @@ export const promiseFindById = <T extends MobilettoOrmObject>(
     addedAnything: MobilettoFoundMarker
 ): Promise<string> => {
     const typeDef = repository.typeDef;
-    const logPrefix = `promiseFindById(storage=${storage.name}, ${field}=${id}):`;
+    const logPrefix = `promiseFindById(storage=${storage.name}, typeDef=${repository.typeDef.typeName}, id=${id}):`;
     return new Promise<string>((resolve) => {
         repository
             .findById(id, { removed, noRedact })

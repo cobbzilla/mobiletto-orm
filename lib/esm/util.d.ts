@@ -11,6 +11,6 @@ export declare const verifyWrite: <T extends MobilettoOrmObject>(repository: Mob
 export type MobilettoFoundMarker = {
     found: boolean;
 };
-export declare const promiseFindById: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, storage: MobilettoConnection, field: string, id: string, first: boolean, removed: boolean, noRedact: boolean, predicate: MobilettoOrmPredicate | null, apply: MobilettoOrmApplyFunc | null, applyResults: Record<string, unknown> | null, noCollect: boolean, found: Record<string, MobilettoOrmObject | null>, addedAnything: MobilettoFoundMarker) => Promise<string>;
+export declare const promiseFindById: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, storage: MobilettoConnection, id: string, first: boolean, removed: boolean, noRedact: boolean, predicate: MobilettoOrmPredicate | null, apply: MobilettoOrmApplyFunc | null, applyResults: Record<string, unknown> | null, noCollect: boolean, found: Record<string, MobilettoOrmObject | null>, addedAnything: MobilettoFoundMarker) => Promise<string>;
 export declare const validateIndexes: <T extends MobilettoOrmObject>(repository: MobilettoOrmRepository<T>, thing: T, errors: MobilettoOrmValidationErrors) => Promise<void>;
 export declare const redactAndApply: <T extends MobilettoOrmObject>(typeDef: MobilettoOrmTypeDef, thing: T, opts?: MobilettoOrmFindOpts) => Promise<T>;

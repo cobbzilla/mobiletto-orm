@@ -421,7 +421,6 @@ const repo = <T extends MobilettoOrmObject>(
                                                     promiseFindById(
                                                         repository,
                                                         storage,
-                                                        field,
                                                         id,
                                                         first,
                                                         removed,
