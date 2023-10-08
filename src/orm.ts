@@ -83,7 +83,11 @@ const repo = <T extends MobilettoOrmObject>(
             await validateIndexes<T>(this, obj, errors);
 
             obj._meta = typeDef.newMeta(id);
-            return (await verifyWrite(repository, storages, typeDef, id, obj, opts)) as T;
+            const created = (await verifyWrite(repository, storages, typeDef, id, obj, opts)) as T;
+            if (typeof this.afterCreate === "function") {
+                this.afterCreate(created);
+            }
+            return created;
         },
         async update(editedThing: T): Promise<T> {
             const id = typeDef.id(editedThing);
@@ -114,7 +118,11 @@ const repo = <T extends MobilettoOrmObject>(
             obj._meta.mtime = now;
 
             const toWrite = mergeDeep({}, found, obj);
-            return typeDef.redact(await verifyWrite(repository, storages, typeDef, id, toWrite, opts, found)) as T;
+            const updated = (await verifyWrite(repository, storages, typeDef, id, toWrite, opts, found)) as T;
+            if (typeof this.afterUpdate === "function") {
+                this.afterUpdate(updated);
+            }
+            return typeDef.redact(updated) as T;
         },
         async remove(thingToRemove: MobilettoOrmIdArg): Promise<MobilettoOrmObject> {
             if (typeof thingToRemove === "string" || !thingToRemove?._meta?.version) {
@@ -129,16 +137,30 @@ const repo = <T extends MobilettoOrmObject>(
             )) as T;
 
             const tombstone = typeDef.tombstone(found);
-            return typeDef.redact(
-                await verifyWrite(repository, storages, typeDef, typeDef.id(found), tombstone, opts, found)
-            ) as MobilettoOrmObject;
+            const removed = (await verifyWrite(
+                repository,
+                storages,
+                typeDef,
+                typeDef.id(found),
+                tombstone,
+                opts,
+                found
+            )) as T;
+            if (typeof this.afterRemove === "function") {
+                this.afterRemove(removed);
+            }
+            return typeDef.redact(removed) as MobilettoOrmObject;
         },
         async purge(idVal: MobilettoOrmIdArg, opts?: MobilettoOrmPurgeOpts): Promise<MobilettoOrmPurgeResults> {
             const id = this.resolveId(idVal, "purge");
             const found = await this.findById(id, { removed: true });
             const force = (opts && opts.force === true) || false;
-            if (!force && !typeDef.isTombstone(found as T)) {
-                throw new MobilettoOrmSyncError(id, `purge(${id}}: object must first be removed`);
+            if (!typeDef.isTombstone(found as T)) {
+                if (!force) {
+                    throw new MobilettoOrmSyncError(id, `purge(${id}}: object must first be removed`);
+                } else {
+                    await this.remove(found);
+                }
             }
             const objPath = typeDef.generalPath(id);
             const deletePromises = [];
@@ -153,6 +175,9 @@ const repo = <T extends MobilettoOrmObject>(
                             });
                     })
                 );
+            }
+            if (typeof this.afterPurge === "function") {
+                this.afterPurge(found);
             }
             return await Promise.all(deletePromises);
         },
