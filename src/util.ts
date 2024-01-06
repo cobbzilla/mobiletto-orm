@@ -1,3 +1,4 @@
+import { stripNonAlphaNumericKeys } from "zilla-util";
 import { logger, MobilettoConnection } from "mobiletto-base";
 import {
     addError,
@@ -112,7 +113,7 @@ export const verifyWrite = async <T extends MobilettoOrmObject>(
     typeDef.transientFields.forEach((f) => {
         delete obj[f];
     });
-    const objJson = toJson(obj, prettyJson);
+    const objJson = toJson(stripNonAlphaNumericKeys(obj), prettyJson);
     for (const storage of actualStorages) {
         // write object
         writePromises.push(
